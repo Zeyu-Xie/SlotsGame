@@ -20,7 +20,15 @@ function createPicContainer(picTexture: PIXI.Texture, scale_index: number): PIXI
 
     reel.addChild(picContainer);
   }
-  return reel 
+  return reel
+}
+
+// reposition the elements in the reel
+function render(reel:PIXI.Container): void {
+  for (let i = 0; i < reel.children.length; i++) {
+    const element = reel.children[i];
+    element.y  = i * 100;
+  }
 }
 
 
@@ -62,34 +70,50 @@ function createPicContainer(picTexture: PIXI.Texture, scale_index: number): PIXI
 
     const topMask = new PIXI.Graphics();
     topMask.rect(0, 0, app.screen.width, VISIBLE_TOP);
-    topMask.fill({color: 0x000000, alpha: alpha_index});
-  
+    topMask.fill({ color: 0x000000, alpha: alpha_index });
+
     const bottomMask = new PIXI.Graphics();
     bottomMask.rect(0, VISIBLE_BOTTOM, app.screen.width, app.screen.height * 2 / 7);
-    bottomMask.fill({color: 0x000000, alpha: alpha_index});
-  
+    bottomMask.fill({ color: 0x000000, alpha: alpha_index });
+
     app.stage.addChild(topMask, bottomMask);
-  
+
     return { topMask, bottomMask };
   }
-  addMask(app, 0.5); 
+  addMask(app, 0.5);
 
   app.ticker.add((time: PIXI.Ticker) => {
     // scroll
     function move(reel: PIXI.Container, direction: number): void {
-      // todo: change to moving the container instead of moving all the children, and you should also change the signature of the function to like 'moving' or 'move'
-      reel.y += 5 * time.deltaTime * direction
+      reel.y += 2 * time.deltaTime * direction;
     }
-    move(reel_1, 1)
-    
-    // wrap
-    for (let element of reel_1.children) {
+    move(reel_1, 1);
 
-      // if (reel_1.reel.children.y > app.screen.height * 5 / 7)
-      // {
-      //   const 
-      // }
+    wrap
+    function wrap(reel: PIXI.Container, direction: number): void {
+      if (direction === 1) {
+        const line = VISIBLE_TOP - 40;
+        const last = reel.children[reel.children.length - 1];
+        if (reel.y > line) {
+          reel.removeChild(last);
+          reel.addChildAt(last, 0);
+          render(reel);
+          reel.y = reel.y - 50;
+        }
+      } else {
+        const line = VISIBLE_BOTTOM + 40;
+        const first = reel.children[0];
+        if (reel.y < line) {
+          reel.removeChild(first);
+          reel.addChild(first);
+          render(reel);
+          reel.y = reel.y + 50;
+        }
+      }
     }
+    wrap(reel_1, 1);
+    
+
 
   });
 
