@@ -20,8 +20,22 @@ function createPicContainer(picTexture: PIXI.Texture, scale_index: number): PIXI
 
     reel.addChild(picContainer);
   }
+
   return reel
 }
+// create reels
+function createReels(texture: PIXI.Texture, count: number, app: PIXI.Application): PIXI.Container[] {
+  const reels: PIXI.Container[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const reel = createPicContainer(texture, 1);
+    reels.push(reel);
+    app.stage.addChild(reel);
+  }
+
+  return reels;
+}
+
 
 // reposition the elements in the reel
 function render(reel:PIXI.Container): void {
@@ -38,58 +52,109 @@ function render(reel:PIXI.Container): void {
   await app.init({ background: "#1099bb", resizeTo: window });
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
+  //load the assets
+  PIXI.Assets.addBundle("assets", {
+    bunny: "/assets/bunny.png",
+    gift: "/assets/gift.png",
+  });
+  const textures = await PIXI.Assets.loadBundle("assets");
+
+  // create centerLine
+  const centerLine = new PIXI.Graphics();
+  centerLine.moveTo(0, app.screen.height / 2);
+  centerLine.lineTo(app.screen.width, app.screen.height / 2);
+  centerLine.stroke({ width: 2, color: 0x000000, alpha: 1 });
+  app.stage.addChild(centerLine);
+
+  // create a mask
+  function addMask(app: PIXI.Application, alpha_index: number): { topMask: PIXI.Graphics, bottomMask: PIXI.Graphics } {
+
+      const topMask = new PIXI.Graphics();
+      topMask.rect(0, 0, app.screen.width, VISIBLE_TOP);
+      topMask.fill({ color: 0x000000, alpha: alpha_index });
+  
+      const bottomMask = new PIXI.Graphics();
+      bottomMask.rect(0, VISIBLE_BOTTOM, app.screen.width, app.screen.height * 2 / 7);
+      bottomMask.fill({ color: 0x000000, alpha: alpha_index });
+  
+      app.stage.addChild(topMask, bottomMask);
+  
+      return { topMask, bottomMask };
+    }
+  // create a reel set
+  function createReelSet(reel1: PIXI.Container, reel2: PIXI.Container, reel3: PIXI.Container): PIXI.Container {
+    const reelSet = new PIXI.Container();
+    reelSet.addChild(reel1, reel2, reel3)
+    app.stage.addChild(reelSet);
+    return reelSet;
+  }
+  // set the position of the reels
+  function positionReels(reels: PIXI.Container[], startX: number, startY: number, gap: number): void {
+    for (let i = 0; i < reels.length; i++) {
+      const reel = reels[i];
+      reel.x = startX + i * gap;
+      reel.y = startY;
+    }
+  }
+
+
   // define gloable variables
+  const CENTER = app.screen.width / 2;
   const VISIBLE_TOP = app.screen.height * 2 / 7;
   const VISIBLE_BOTTOM = app.screen.height * 5 / 7;
 
+
   // Load the bunny texture
-  const texture = await PIXI.Assets.load("/assets/gift.png");
+  const giftTexture = textures.gift;
 
   // create and show reels
-  const reel_1 = createPicContainer(texture, 1);
-  const reel_2 = createPicContainer(texture, 1);
-  const reel_3 = createPicContainer(texture, 1);
-  app.stage.addChild(reel_1, reel_2, reel_3)
+  const [reel_1, reel_2, reel_3] = createReels(giftTexture, 3, app);
 
-  // create, show, and set position of reelSet
-  const reelSet = new PIXI.Container();
-  reelSet.addChild(reel_1, reel_2, reel_3)
-  app.stage.addChild(reelSet);
+  // create and set position of reelSet
+  const reelSet = createReelSet(reel_1, reel_2, reel_3);  
   reelSet.x = (app.screen.width - reelSet.width) / 2 - reelSet.width;
 
   // set position of reels
-  reel_1.y = app.screen.height * 3 / 14;
-  reel_1.x = 0;
-  reel_2.y = app.screen.height * 3 / 14;
-  reel_2.x = 100;
-  reel_3.y = app.screen.height * 3 / 14;
-  reel_3.x = 200;
+  positionReels([reel_1, reel_2, reel_3], 0, app.screen.height * 3 / 14, 100);
 
-  // create mask
-  function addMask(app: PIXI.Application, alpha_index: number): { topMask: PIXI.Graphics, bottomMask: PIXI.Graphics } {
-
-    const topMask = new PIXI.Graphics();
-    topMask.rect(0, 0, app.screen.width, VISIBLE_TOP);
-    topMask.fill({ color: 0x000000, alpha: alpha_index });
-
-    const bottomMask = new PIXI.Graphics();
-    bottomMask.rect(0, VISIBLE_BOTTOM, app.screen.width, app.screen.height * 2 / 7);
-    bottomMask.fill({ color: 0x000000, alpha: alpha_index });
-
-    app.stage.addChild(topMask, bottomMask);
-
-    return { topMask, bottomMask };
-  }
+  // add mask
   addMask(app, 0.5);
 
+  // ----------------------------------------------
+
+  // create action button
+  const buttonTexture = textures.bunny;
+  const actionButton = new PIXI.Sprite(buttonTexture);
+  actionButton.interactive = true;
+  actionButton.cursor = "pointer";
+  app.stage.addChild(actionButton);
+
+  const targetIndex = [0, 1, 2];
+  let isSpinning = false;
+  let spinProgress = [0, 0, 0];
+  let isStopped = [false, false, false];
+  let total = reel_1.children.length * 20;
+  
+  
+  actionButton.on("pointerdown", onButtonClick);
+  
+  function onButtonClick() {
+    isSpinning = !isSpinning;
+
+    let spinProgress = [0,0,0];
+    let isStopped = [false, false, false];
+
+  }
+
   app.ticker.add((time: PIXI.Ticker) => {
+    if (!isSpinning) return;
     // scroll
     function move(reel: PIXI.Container, direction: number): void {
       reel.y += 2 * time.deltaTime * direction;
     }
     move(reel_1, 1);
 
-    wrap
+    //wrap
     function wrap(reel: PIXI.Container, direction: number): void {
       if (direction === 1) {
         const line = VISIBLE_TOP - 40;
@@ -98,7 +163,7 @@ function render(reel:PIXI.Container): void {
           reel.removeChild(last);
           reel.addChildAt(last, 0);
           render(reel);
-          reel.y = reel.y - 50;
+          reel.y = reel.y - 100;
         }
       } else {
         const line = VISIBLE_BOTTOM + 40;
@@ -112,6 +177,19 @@ function render(reel:PIXI.Container): void {
       }
     }
     wrap(reel_1, 1);
+
+    // STOP
+    // function stop(reel: PIXI.Container): void {
+    //   const first = reel.children[0];
+    //   if (reel.y < CENTER) {
+    //     reel.removeChild(first);
+    //     reel.addChild(first);
+    //     render(reel);
+    //     reel.y = reel.y + 50;
+    //   }
+    // }
+    // stop(reel_1);
+
     
 
 
