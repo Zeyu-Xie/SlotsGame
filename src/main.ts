@@ -1,13 +1,16 @@
 // import { Application, Assets, Sprite } from "pixi.js";
 import * as PIXI from "pixi.js";
 
+// define the name of the type 'PIXI.Sprite[]'
 type Sprites = PIXI.Sprite[]
 
+// generate random sprits colors
 function generateRandomColor(): number {
   // 生成一个 0 到 16777215 之间的随机整数（即 0x000000 到 0xFFFFFF）
   const randomColor = Math.floor(Math.random() * 16777215);
   return randomColor;
 }
+
 // create a colum of pics
 function createAndRenderReel(picTexture: PIXI.Texture, scale_index: number): PIXI.Container {
   const reel = new PIXI.Container();
@@ -26,7 +29,7 @@ function createAndRenderReel(picTexture: PIXI.Texture, scale_index: number): PIX
   return reel
 }
 
-// make a container filled with Sprites
+// create a container filled with Sprites
 function buildReel(sprites: Sprites): PIXI.Container {
   const reel = new PIXI.Container();
   for (let i = 0; i < sprites.length; i++) {
@@ -39,6 +42,7 @@ function buildReel(sprites: Sprites): PIXI.Container {
 function renderReel(reel: PIXI.Container, scale_index: number, space: number): void {
   for (let i = 0; i < reel.children.length; i++) {
     const sprite = reel.children[i];
+    // todo: extract this line to a function called arrange
     sprite.y = i * space;
     sprite.scale.set(scale_index);
   }
@@ -51,11 +55,11 @@ function createReel(sprites: Sprites, scale_index: number, space: number): PIXI.
   return reel
 }
 
-// create reel array containing many reels 
+// create reel array containing a certain number of reels 
 function createReels(spritesArray: Sprites[], scale_index: number, space: number): PIXI.Container[] {
-  // create many reels by calling function createReel many times
-  // put reels into an array
-  // return this array
+  /*create some reels by calling function createReel many times
+   * put reels into an array
+   * return this array */
   const reels: PIXI.Container[] = []
   for (let i = 0; i < spritesArray.length; i++) {
     const reel = createReel(spritesArray[i], scale_index, space);
@@ -90,14 +94,14 @@ function createReelSet(reels: PIXI.Container[], startX: number, startY: number, 
 }
 
 // reposition the elements in the reel
-function render(reel: PIXI.Container): void {
+function arrange(reel: PIXI.Container): void {
   for (let i = 0; i < reel.children.length; i++) {
     const element = reel.children[i];
     element.y = i * 100;
   }
 }
 
-// create reels
+// [Depracated] create reels
 function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.Application): PIXI.Container[] {
   const reels: PIXI.Container[] = [];
 
@@ -111,6 +115,7 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
 }
 
 (async () => {
+
   // Create and initialize a new application
   const app = new PIXI.Application();
   await app.init({ background: "#1099bb", resizeTo: window });
@@ -122,11 +127,26 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   const REEL_GAP = 100;
   const CENTER_X = app.screen.width / 2;
   const CENTER_Y = app.screen.height / 2;
-  const SCALE = 0.4;
+  const SCALE = 1;
+
+  const MASK_COLOR = 0x000000;
+  const MASK_ALPHA = 0.5;
+
+  const MASK_TOP_X = 0;
+  const MASK_TOP_Y = 0;
+  const MASK_TOP_WIDTH = app.screen.width;
+  const MASK_TOP_HEIGHT = VISIBLE_TOP;
+
+  const MASK_BOTTOM_X = MASK_TOP_X;
+  const MASK_BOTTOM_Y = VISIBLE_BOTTOM;
+  const MASK_BOTTOM_WIDTH = MASK_TOP_WIDTH;
+  const MASK_BOTTOM_HEIGHT = MASK_TOP_HEIGHT;
+
+
   // todo: change name
   const SPACE = 100;
-  const REEL_NUM = 6;
-  const REEL_SIZE = 10;
+  const REEL_NUM = 3;
+  const REEL_SIZE = 9;
   const REEL_SET_X = CENTER_X - REEL_NUM * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
 
@@ -138,75 +158,58 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   });
   const textures = await PIXI.Assets.loadBundle("assets");
 
-  // create many sprites
-  // put all sprites into spritesArray
+  /* create some sprites 
+   * put all sprites into spritesArray */
   const spritesArray: Sprites[] = [];
+
   for (let i = 0; i < REEL_NUM; i++) {
     const sprites: Sprites = []
+
     for (let j = 0; j < REEL_SIZE; j++) {
       const sprite = new PIXI.Sprite(textures.gift)
       sprites.push(sprite)
     }
-    // create many sprites
-    // put all sprites into Sprites
-    spritesArray.push(sprites)
 
+    spritesArray.push(sprites)
   }
 
   app.stage.addChild(createReelSet(createReels(spritesArray, SCALE, SPACE), REEL_SET_X, REEL_SET_Y, REEL_GAP))
 
-  // // create centerLine
-  // const centerLine = new PIXI.Graphics();
-  // centerLine.moveTo(0, app.screen.height / 2);
-  // centerLine.lineTo(app.screen.width, app.screen.height / 2);
-  // centerLine.stroke({ width: 2, color: 0x000000, alpha: 1 });
-  // app.stage.addChild(centerLine);
+  // create centerLine
+  const centerLine = new PIXI.Graphics();
+  centerLine.moveTo(0, app.screen.height / 2);
+  centerLine.lineTo(app.screen.width, app.screen.height / 2);
+  centerLine.stroke({ width: 2, color: 0x000000, alpha: 1 });
+  app.stage.addChild(centerLine);
 
-  // // create a mask
-  // function addMask(app: PIXI.Application, alpha_index: number): { topMask: PIXI.Graphics, bottomMask: PIXI.Graphics } {
+  // create a mask
+  function createMask(maskX:number, maskY:number, maskWidth:number, maskHeight:number, maskColor:number, maskAlpha:number):{mask: PIXI.Graphics}{
+    const mask = new PIXI.Graphics();
+    mask.rect(maskX, maskY, maskWidth, maskHeight);
+    mask.fill({color: maskColor, alpha: maskAlpha});
+    app.stage.addChild(mask);
+    return{mask};
+  }
+  createMask(MASK_TOP_X, MASK_TOP_Y, MASK_TOP_WIDTH, MASK_TOP_HEIGHT, MASK_COLOR, MASK_ALPHA)
+  createMask(MASK_BOTTOM_X, MASK_BOTTOM_Y, MASK_BOTTOM_WIDTH, MASK_BOTTOM_HEIGHT, MASK_COLOR, MASK_ALPHA)
 
-  //   const topMask = new PIXI.Graphics();
-  //   topMask.rect(0, 0, app.screen.width, VISIBLE_TOP);
-  //   topMask.fill({ color: 0x000000, alpha: alpha_index });
-
-  //   const bottomMask = new PIXI.Graphics();
-  //   bottomMask.rect(0, VISIBLE_BOTTOM, app.screen.width, app.screen.height * 2 / 7);
-  //   bottomMask.fill({ color: 0x000000, alpha: alpha_index });
-
-  //   app.stage.addChild(topMask, bottomMask);
-
-  //   return { topMask, bottomMask };
-  // }
-
-
-  // // set the position of the reels
-  // function positionReels(reels: PIXI.Container[], startX: number, startY: number, gap: number): void {
-  //   for (let i = 0; i < reels.length; i++) {
-  //     const reel = reels[i];
-  //     reel.x = startX + i * gap;
-  //     reel.y = startY;
-  //   }
-  // }
-
-
-
-
-
-  // // Load the bunny texture
-  // const giftTexture = textures.gift;
+  // set the position of the reels
+  function positionReels(reels: PIXI.Container[], startX: number, startY: number, gap: number): void {
+    for (let i = 0; i < reels.length; i++) {
+      const reel = reels[i];
+      reel.x = startX + i * gap;
+      reel.y = startY;
+    }
+  }
 
   // // create and show reels
   // const [reel_1, reel_2, reel_3] = createReelsDepracated(giftTexture, 3, app);
-
   // // create and set position of reelSet
   // const reelSet = createReelSet(reel_1, reel_2, reel_3);
   // reelSet.x = (app.screen.width - reelSet.width) / 2 - reelSet.width;
-
   // // set position of reels
   // positionReels([reel_1, reel_2, reel_3], 0, app.screen.height * 3 / 14, 100);
 
-  // // add mask
-  // addMask(app, 0.5);
 
   // // ----------------------------------------------
 
