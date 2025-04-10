@@ -88,19 +88,27 @@ function renderReelSet(reelSet: PIXI.Container, startX: number, startY: number, 
 
 // create reel set
 function createReelSet(reels: PIXI.Container[], startX: number, startY: number, gap: number): PIXI.Container {
-  const reelset = buildReelSet(reels)
-  renderReelSet(reelset, startX, startY, gap)
-  return reelset
+  const reelSet = buildReelSet(reels)
+  renderReelSet(reelSet, startX, startY, gap)
+  return reelSet
 }
 
 // reposition the elements in the reel
-function arrange(reel: PIXI.Container): void {
+function arrange(reel: PIXI.Container, space: number): void {
   for (let i = 0; i < reel.children.length; i++) {
     const element = reel.children[i];
-    element.y = i * 100;
+    element.y = i * space;
   }
 }
 
+// [Depracated] set the position of the reels
+function positionReels(reels: PIXI.Container[], startX: number, startY: number, gap: number): void {
+  for (let i = 0; i < reels.length; i++) {
+    const reel = reels[i];
+    reel.x = startX + i * gap;
+    reel.y = startY;
+  }
+}
 // [Depracated] create reels
 function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.Application): PIXI.Container[] {
   const reels: PIXI.Container[] = [];
@@ -142,6 +150,12 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   const MASK_BOTTOM_WIDTH = MASK_TOP_WIDTH;
   const MASK_BOTTOM_HEIGHT = MASK_TOP_HEIGHT;
 
+  const SCROLL_DIRECTION_DOWN = 1;
+  const SCROLL_DIRECTION_UP = -1;
+
+  const AVTIONBUTTON_X = 0;
+  const ACTIONBUTTON_Y = 0;
+  const ACTIONBUTTON_SCALE = 2;
 
   // todo: change name
   const SPACE = 80;
@@ -149,7 +163,6 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   const REEL_SIZE = 7;
   const REEL_SET_X = CENTER_X - REEL_NUM * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
-
 
   //load the assets
   PIXI.Assets.addBundle("assets", {
@@ -162,12 +175,7 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   });
   const textures = await PIXI.Assets.loadBundle("assets");
   
-  const spriteBunny = new PIXI.Sprite(textures.bunny);
-  const spriteGift = new PIXI.Sprite(textures.gift);
-  const spriteClub = new PIXI.Sprite(textures.club);
-  const spriteDiamond = new PIXI.Sprite(textures.diamond);
-  const spriteHeart = new PIXI.Sprite(textures.heart);
-  const spriteSpade = new PIXI.Sprite(textures.spade); 
+  const actionButtonSprite = new PIXI.Sprite(textures.bunny);
 
   /* create some sprites 
    * put all sprites into spritesArray */
@@ -206,7 +214,10 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   //   spritesArray.push(sprites)
   // }
 
-  app.stage.addChild(createReelSet(createReels(spritesArray, SCALE, SPACE), REEL_SET_X, REEL_SET_Y, REEL_GAP))
+  const reels = createReels(spritesArray, SCALE, SPACE);
+  const reelSet = createReelSet(reels, REEL_SET_X, REEL_SET_Y, REEL_GAP);
+  app.stage.addChild(reelSet);
+  // app.stage.addChild(createReelSet(createReels(spritesArray, SCALE, SPACE), REEL_SET_X, REEL_SET_Y, REEL_GAP))
 
   // create centerLine
   const centerLine = new PIXI.Graphics();
@@ -226,73 +237,81 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   createMask(MASK_TOP_X, MASK_TOP_Y, MASK_TOP_WIDTH, MASK_TOP_HEIGHT, MASK_COLOR, MASK_ALPHA)
   createMask(MASK_BOTTOM_X, MASK_BOTTOM_Y, MASK_BOTTOM_WIDTH, MASK_BOTTOM_HEIGHT, MASK_COLOR, MASK_ALPHA)
 
-  // set the position of the reels
-  function positionReels(reels: PIXI.Container[], startX: number, startY: number, gap: number): void {
-    for (let i = 0; i < reels.length; i++) {
-      const reel = reels[i];
-      reel.x = startX + i * gap;
-      reel.y = startY;
-    }
-  }
-
   // // ----------------------------------------------
 
-  // // create action button
-  // const buttonTexture = textures.bunny;
-  // const actionButton = new PIXI.Sprite(buttonTexture);
-  // actionButton.interactive = true;
-  // actionButton.cursor = "pointer";
-  // app.stage.addChild(actionButton);
+  // create and set the action mode of the button
+  function setButtonActionMode(buttonTexture: PIXI.Sprite): PIXI.Sprite {
+    buttonTexture.eventMode = 'static';
+    buttonTexture.cursor = 'pointer';
+    return buttonTexture
+  }
+  
+  // render the action button
+  /* create a new button container  
+   * add button sprite into the button container
+   * set the position and scale of the button container */
+  function createAndRenderButton(buttonSprite: PIXI.Sprite, buttonX: number, buttonY: number, scale_index: number): PIXI.Container {
+    buttonSprite.x = buttonX;
+    buttonSprite.y = buttonY;
+    buttonSprite.scale.set(scale_index);
+    app.stage.addChild(buttonSprite);
+    return buttonSprite;
+  }
+  const actionButton = createAndRenderButton(setButtonActionMode(actionButtonSprite), AVTIONBUTTON_X, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
 
-  // const targetIndex = [0, 1, 2];
-  // let isSpinning = false;
-  // let spinProgress = [0, 0, 0];
-  // let isStopped = [false, false, false];
-  // let total = reel_1.children.length * 20;
-
-
-  // actionButton.on("pointerdown", onButtonClick);
-
-  // function onButtonClick() {
-  //   isSpinning = !isSpinning;
-
-  //   let spinProgress = [0, 0, 0];
-  //   let isStopped = [false, false, false];
-
-  // }
+  let isSpinning = false;
+  
+  actionButton.on('pointerdown', function(){
+    if (!isSpinning){
+      isSpinning = true;
+      console.log('9999999');
+    }
+  });
 
   app.ticker.add((time: PIXI.Ticker) => {
-    // if (!isSpinning) return;
+    if (isSpinning) {
+      move(reels[0], SCROLL_DIRECTION_DOWN);
+      move(reels[1], SCROLL_DIRECTION_UP);
+      move(reels[2], SCROLL_DIRECTION_DOWN);
 
-    // scroll
-    // function move(reel: PIXI.Container, direction: number): void {
-    //   reel.y += 2 * time.deltaTime * direction;
-    // }
-    // move(sprites[1], 1);
+      wrap(reels[0], SPACE, SCROLL_DIRECTION_DOWN);
+      wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
+      wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
+    };
 
-    // //wrap
-    // function wrap(reel: PIXI.Container, direction: number): void {
-    //   if (direction === 1) {
-    //     const line = VISIBLE_TOP - 40;
-    //     const last = reel.children[reel.children.length - 1];
-    //     if (reel.y > line) {
-    //       reel.removeChild(last);
-    //       reel.addChildAt(last, 0);
-    //       render(reel);
-    //       reel.y = reel.y - 100;
-    //     }
-    //   } else {
-    //     const line = VISIBLE_BOTTOM + 40;
-    //     const first = reel.children[0];
-    //     if (reel.y < line) {
-    //       reel.removeChild(first);
-    //       reel.addChild(first);
-    //       render(reel);
-    //       reel.y = reel.y + 50;
-    //     }
-    //   }
-    // }
-    // wrap(reel_1, 1);
+    // scroll the reel as assigned direction
+    function move(reel: PIXI.Container, direction: number): void {
+      reel.y += 2 * time.deltaTime * direction;
+    }
+    // move(reels[0], SCROLL_DIRECTION_DOWN);
+    // move(reels[1], SCROLL_DIRECTION_UP);
+    // move(reels[2], SCROLL_DIRECTION_DOWN);
+
+    // wrap the reel as assigned direction
+    function wrap(reel: PIXI.Container, space: number, scrollDirection: number): void {
+      if (scrollDirection === SCROLL_DIRECTION_DOWN) {
+        const line = VISIBLE_TOP - space;
+        const last = reel.children[reel.children.length - 1];
+        if (reel.y > line) {
+          reel.removeChild(last);
+          reel.addChildAt(last, 0);
+          arrange(reel, SPACE);
+          reel.y = reel.y - space;
+        }
+      } else if ( scrollDirection === SCROLL_DIRECTION_UP){      
+        const line = VISIBLE_TOP - space * 2;
+        const first = reel.children[0];
+        if (reel.y < line) {
+          reel.removeChild(first);
+          reel.addChild(first);
+          arrange(reel, SPACE);
+          reel.y = reel.y + space;
+        }
+      }
+    }
+    // wrap(reels[0], SPACE, SCROLL_DIRECTION_DOWN);
+    // wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
+    // wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
 
     // STOP
     // function stop(reel: PIXI.Container): void {
