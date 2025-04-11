@@ -157,10 +157,12 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   const ACTIONBUTTON_Y = 0;
   const ACTIONBUTTON_SCALE = 2;
 
+  const STOP_SPRITES_INDEX_1 = 2;
+
   // todo: change name
   const SPACE = 80;
   const REEL_NUM = 3;
-  const REEL_SIZE = 7;
+  const REEL_SIZE = 8;
   const REEL_SET_X = CENTER_X - REEL_NUM * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
 
@@ -171,48 +173,57 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
     club: "/assets/club.png",
     diamond: "/assets/diamond.png",
     heart: "/assets/heart.png",
-    spade:"/assets/spade.png"
+    spade: "/assets/spade.png"
   });
   const textures = await PIXI.Assets.loadBundle("assets");
-  
+
   const actionButtonSprite = new PIXI.Sprite(textures.bunny);
 
   /* create some sprites 
    * put all sprites into spritesArray */
-  const spritesArray: Sprites[] = [
-    [new PIXI.Sprite(textures.club),
-      new PIXI.Sprite(textures.diamond),
-      new PIXI.Sprite(textures.heart),
-      new PIXI.Sprite(textures.spade),
-      new PIXI.Sprite(textures.gift),
-      new PIXI.Sprite(textures.diamond),
-      new PIXI.Sprite(textures.gift)],
-    [new PIXI.Sprite(textures.diamond),
-      new PIXI.Sprite(textures.heart),
-      new PIXI.Sprite(textures.spade),
-      new PIXI.Sprite(textures.gift),
-      new PIXI.Sprite(textures.club),
-      new PIXI.Sprite(textures.diamond),
-      new PIXI.Sprite(textures.gift)],
-    [new PIXI.Sprite(textures.heart),
-      new PIXI.Sprite(textures.diamond),
-      new PIXI.Sprite(textures.heart),
-      new PIXI.Sprite(textures.spade),
-      new PIXI.Sprite(textures.gift),
-      new PIXI.Sprite(textures.gift),
-      new PIXI.Sprite(textures.club)]
-  ];
+  // todo: apply this later
+  // const spritesArray: Sprites[] = [
+  //   [new PIXI.Sprite(textures.club),
+  //   new PIXI.Sprite(textures.diamond),
+  //   new PIXI.Sprite(textures.heart),
+  //   new PIXI.Sprite(textures.spade),
+  //   new PIXI.Sprite(textures.gift),
+  //   new PIXI.Sprite(textures.diamond),
+  //   new PIXI.Sprite(textures.gift)],
+  //   [new PIXI.Sprite(textures.diamond),
+  //   new PIXI.Sprite(textures.heart),
+  //   new PIXI.Sprite(textures.spade),
+  //   new PIXI.Sprite(textures.gift),
+  //   new PIXI.Sprite(textures.club),
+  //   new PIXI.Sprite(textures.diamond),
+  //   new PIXI.Sprite(textures.gift)],
+  //   [new PIXI.Sprite(textures.heart),
+  //   new PIXI.Sprite(textures.diamond),
+  //   new PIXI.Sprite(textures.heart),
+  //   new PIXI.Sprite(textures.spade),
+  //   new PIXI.Sprite(textures.gift),
+  //   new PIXI.Sprite(textures.gift),
+  //   new PIXI.Sprite(textures.club)]
+  // ];
 
-  // for (let i = 0; i < REEL_NUM; i++) {
-  //   const sprites: Sprites = []
 
-  //   for (let j = 0; j < REEL_SIZE; j++) {
-  //     const sprite = new PIXI.Sprite(textures.gift)
-  //     sprites.push(sprite)
-  //   }
+  // temp usage of init sprites
+  const spritesArray: Sprites[] = []
+  for (let i = 0; i < REEL_NUM; i++) {
+    const sprites: Sprites = []
 
-  //   spritesArray.push(sprites)
-  // }
+    for (let j = 0; j < REEL_SIZE; j++) {
+      const sprite = new PIXI.Sprite(textures.gift)
+      sprite.tint = generateRandomColor();
+      sprite.label = "sprite_00"+j
+      sprites.push(sprite);
+      console.log((sprite as any).id); 
+    }
+    spritesArray.push(sprites)
+  }
+  
+  
+  
 
   const reels = createReels(spritesArray, SCALE, SPACE);
   const reelSet = createReelSet(reels, REEL_SET_X, REEL_SET_Y, REEL_GAP);
@@ -227,12 +238,12 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   app.stage.addChild(centerLine);
 
   // create a mask
-  function createMask(maskX:number, maskY:number, maskWidth:number, maskHeight:number, maskColor:number, maskAlpha:number):{mask: PIXI.Graphics}{
+  function createMask(maskX: number, maskY: number, maskWidth: number, maskHeight: number, maskColor: number, maskAlpha: number): { mask: PIXI.Graphics } {
     const mask = new PIXI.Graphics();
     mask.rect(maskX, maskY, maskWidth, maskHeight);
-    mask.fill({color: maskColor, alpha: maskAlpha});
+    mask.fill({ color: maskColor, alpha: maskAlpha });
     app.stage.addChild(mask);
-    return{mask};
+    return { mask };
   }
   createMask(MASK_TOP_X, MASK_TOP_Y, MASK_TOP_WIDTH, MASK_TOP_HEIGHT, MASK_COLOR, MASK_ALPHA)
   createMask(MASK_BOTTOM_X, MASK_BOTTOM_Y, MASK_BOTTOM_WIDTH, MASK_BOTTOM_HEIGHT, MASK_COLOR, MASK_ALPHA)
@@ -245,7 +256,7 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
     buttonTexture.cursor = 'pointer';
     return buttonTexture
   }
-  
+
   // render the action button
   /* create a new button container  
    * add button sprite into the button container
@@ -259,38 +270,87 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   }
   const actionButton = createAndRenderButton(setButtonActionMode(actionButtonSprite), AVTIONBUTTON_X, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
 
-  let isSpinning = false;
-  
-  actionButton.on('pointerdown', function(){
-    if (!isSpinning){
-      isSpinning = true;
-      console.log('9999999');
+  // let reel Spinning state = false;
+  let reelStates = {
+    reel1: false,
+    reel2: false,
+    reel3: false,
+  };
+  let delay = 0;
+
+  // stop assigned reel
+  function stop(reelKey: keyof typeof reelStates) {
+    reelStates[reelKey] = false;
+  }
+
+  // check the status of stopping the assigned sprites of a reel at the center line 
+  // function checkStop(spritesArray: Sprites[], stopSpritesNum: number, stopSpritesIndex: number, centerLine: number): boolean {
+  //   console.log("centerline:" + centerLine);
+  //   if (Math.floor(spritesArray[stopSpritesNum][stopSpritesIndex].y) === centerLine) {
+
+  //     return false;
+  //   }
+  //   return true;
+  // }
+
+  function checkStop(spritesArray: Sprites[], stopSpritesName: string, centerLine: number): boolean {
+    console.log("centerline:" + centerLine);
+    for (const column of spritesArray) {
+      for (const sprite of column) {
+        if (sprite.label === stopSpritesName) {
+          console.log("sprite.y:", sprite.y);
+          return Math.abs(sprite.y - centerLine) > 1; // true 表示还没到中心
+        }
+      }
+    }
+    return true; // 没找到就继续滚
+  }
+
+  // set button action
+  actionButton.on('pointerdown', function () {
+    if (reelStates.reel1 === false) {
+      reelStates.reel1 = true;
+      // console.log('9999999');
     }
   });
 
   app.ticker.add((time: PIXI.Ticker) => {
-    if (isSpinning) {
+    if (reelStates.reel1) {
       move(reels[0], SCROLL_DIRECTION_DOWN);
-      move(reels[1], SCROLL_DIRECTION_UP);
-      move(reels[2], SCROLL_DIRECTION_DOWN);
+      // move(reels[1], SCROLL_DIRECTION_UP);
+      // move(reels[2], SCROLL_DIRECTION_DOWN);
 
       wrap(reels[0], SPACE, SCROLL_DIRECTION_DOWN);
-      wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
-      wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
+      // wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
+      // wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
+
+      delay++;
+
+      const centerLine =  SPACE * REEL_SIZE /2 ;
+
+      if (delay > 200) {
+        console.log(checkStop(spritesArray, "sprite_002", centerLine));
+
+        reelStates.reel1 = checkStop(spritesArray, "sprite_002", centerLine);
+        // delay = 0;
+
+      }
     };
 
     // scroll the reel as assigned direction
     function move(reel: PIXI.Container, direction: number): void {
+
       reel.y += 2 * time.deltaTime * direction;
+      console.log(reel.y);
     }
-    // move(reels[0], SCROLL_DIRECTION_DOWN);
-    // move(reels[1], SCROLL_DIRECTION_UP);
-    // move(reels[2], SCROLL_DIRECTION_DOWN);
 
     // wrap the reel as assigned direction
+    // happens when reel moved a space distance
+    // put last to first and rearrange
+    // reset reel postion to its begining position (REEL_SET_Y)
     function wrap(reel: PIXI.Container, space: number, scrollDirection: number): void {
       if (scrollDirection === SCROLL_DIRECTION_DOWN) {
-        const line = VISIBLE_TOP - space;
+        const line = REEL_SET_Y + space;
         const last = reel.children[reel.children.length - 1];
         if (reel.y > line) {
           reel.removeChild(last);
@@ -298,7 +358,7 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
           arrange(reel, SPACE);
           reel.y = reel.y - space;
         }
-      } else if ( scrollDirection === SCROLL_DIRECTION_UP){      
+      } else if (scrollDirection === SCROLL_DIRECTION_UP) {
         const line = VISIBLE_TOP - space * 2;
         const first = reel.children[0];
         if (reel.y < line) {
@@ -309,23 +369,6 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
         }
       }
     }
-    // wrap(reels[0], SPACE, SCROLL_DIRECTION_DOWN);
-    // wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
-    // wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
-
-    // STOP
-    // function stop(reel: PIXI.Container): void {
-    //   const first = reel.children[0];
-    //   if (reel.y < CENTER) {
-    //     reel.removeChild(first);
-    //     reel.addChild(first);
-    //     render(reel);
-    //     reel.y = reel.y + 50;
-    //   }
-    // }
-    // stop(reel_1);
-
-
 
 
   });
