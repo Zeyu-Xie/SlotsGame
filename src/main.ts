@@ -101,6 +101,13 @@ function arrange(reel: PIXI.Container, space: number): void {
   }
 }
 
+// create and set the action mode of the button
+function setButtonActionMode(buttonTexture: PIXI.Sprite): PIXI.Sprite {
+  buttonTexture.eventMode = 'static';
+  buttonTexture.cursor = 'pointer';
+  return buttonTexture
+}
+
 // [Depracated] set the position of the reels
 function positionReels(reels: PIXI.Container[], startX: number, startY: number, gap: number): void {
   for (let i = 0; i < reels.length; i++) {
@@ -166,6 +173,53 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   const REEL_SET_X = CENTER_X - REEL_NUM * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
 
+  // create a mask
+  function createMask(maskX: number, maskY: number, maskWidth: number, maskHeight: number, maskColor: number, maskAlpha: number): { mask: PIXI.Graphics } {
+    const mask = new PIXI.Graphics();
+    mask.rect(maskX, maskY, maskWidth, maskHeight);
+    mask.fill({ color: maskColor, alpha: maskAlpha });
+    app.stage.addChild(mask);
+    return { mask };
+  }
+
+  // wrap the reel as assigned direction
+  // happens when reel moved a space distance
+  // put last to first and rearrange
+  // reset reel position to its beginning position (REEL_SET_Y)
+  function wrap(reel: PIXI.Container, space: number, scrollDirection: number): void {
+    if (scrollDirection === SCROLL_DIRECTION_DOWN) {
+      const line = REEL_SET_Y + space;
+      const last = reel.children[reel.children.length - 1];
+      if (reel.y > line) {
+        reel.removeChild(last);
+        reel.addChildAt(last, 0);
+        arrange(reel, SPACE);
+        reel.y = reel.y - space;
+      }
+    } else if (scrollDirection === SCROLL_DIRECTION_UP) {
+      const line = REEL_SET_Y;
+      const first = reel.children[0];
+      if (reel.y < line) {
+        reel.removeChild(first);
+        reel.addChild(first);
+        arrange(reel, SPACE);
+        reel.y = reel.y + space;
+      }
+    }
+  }
+
+    // render the action button
+  /* create a new button container  
+   * add button sprite into the button container
+   * set the position and scale of the button container */
+  function createAndRenderButton(buttonSprite: PIXI.Sprite, buttonX: number, buttonY: number, scale_index: number): PIXI.Container {
+    buttonSprite.x = buttonX;
+    buttonSprite.y = buttonY;
+    buttonSprite.scale.set(scale_index);
+    app.stage.addChild(buttonSprite);
+    return buttonSprite;
+  }
+
   //load the assets
   PIXI.Assets.addBundle("assets", {
     bunny: "/assets/bunny.png",
@@ -222,53 +276,26 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
     spritesArray.push(sprites)
   }
   
-  
-  
-
   const reels = createReels(spritesArray, SCALE, SPACE);
   const reelSet = createReelSet(reels, REEL_SET_X, REEL_SET_Y, REEL_GAP);
   app.stage.addChild(reelSet);
   // app.stage.addChild(createReelSet(createReels(spritesArray, SCALE, SPACE), REEL_SET_X, REEL_SET_Y, REEL_GAP))
 
   // create centerLine
-  const centerLine = new PIXI.Graphics();
-  centerLine.moveTo(0, app.screen.height / 2);
-  centerLine.lineTo(app.screen.width, app.screen.height / 2);
-  centerLine.stroke({ width: 2, color: 0x000000, alpha: 1 });
-  app.stage.addChild(centerLine);
+  // const centerLine = new PIXI.Graphics();
+  // centerLine.moveTo(0, app.screen.height / 2);
+  // centerLine.lineTo(app.screen.width, app.screen.height / 2);
+  // centerLine.stroke({ width: 2, color: 0x000000, alpha: 1 });
+  // app.stage.addChild(centerLine);
 
-  // create a mask
-  function createMask(maskX: number, maskY: number, maskWidth: number, maskHeight: number, maskColor: number, maskAlpha: number): { mask: PIXI.Graphics } {
-    const mask = new PIXI.Graphics();
-    mask.rect(maskX, maskY, maskWidth, maskHeight);
-    mask.fill({ color: maskColor, alpha: maskAlpha });
-    app.stage.addChild(mask);
-    return { mask };
-  }
+  // create top and bottom masks
   createMask(MASK_TOP_X, MASK_TOP_Y, MASK_TOP_WIDTH, MASK_TOP_HEIGHT, MASK_COLOR, MASK_ALPHA)
   createMask(MASK_BOTTOM_X, MASK_BOTTOM_Y, MASK_BOTTOM_WIDTH, MASK_BOTTOM_HEIGHT, MASK_COLOR, MASK_ALPHA)
 
-  // // ----------------------------------------------
-
-  // create and set the action mode of the button
-  function setButtonActionMode(buttonTexture: PIXI.Sprite): PIXI.Sprite {
-    buttonTexture.eventMode = 'static';
-    buttonTexture.cursor = 'pointer';
-    return buttonTexture
-  }
-
-  // render the action button
-  /* create a new button container  
-   * add button sprite into the button container
-   * set the position and scale of the button container */
-  function createAndRenderButton(buttonSprite: PIXI.Sprite, buttonX: number, buttonY: number, scale_index: number): PIXI.Container {
-    buttonSprite.x = buttonX;
-    buttonSprite.y = buttonY;
-    buttonSprite.scale.set(scale_index);
-    app.stage.addChild(buttonSprite);
-    return buttonSprite;
-  }
+  // create and render button
   const actionButton = createAndRenderButton(setButtonActionMode(actionButtonSprite), AVTIONBUTTON_X, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
+
+   // --------------------------------------------------------
 
   // let reel Spinning state = false;
   let reelStates = {
@@ -276,35 +303,6 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
     reel2: false,
     reel3: false,
   };
-  let delay = 0;
-
-  // stop assigned reel
-  function stop(reelKey: keyof typeof reelStates) {
-    reelStates[reelKey] = false;
-  }
-
-  // check the status of stopping the assigned sprites of a reel at the center line 
-  // function checkStop(spritesArray: Sprites[], stopSpritesNum: number, stopSpritesIndex: number, centerLine: number): boolean {
-  //   console.log("centerline:" + centerLine);
-  //   if (Math.floor(spritesArray[stopSpritesNum][stopSpritesIndex].y) === centerLine) {
-
-  //     return false;
-  //   }
-  //   return true;
-  // }
-
-  function checkStop(spritesArray: Sprites[], stopSpritesName: string, centerLine: number): boolean {
-    // console.log("centerline:" + centerLine);
-    for (const column of spritesArray) {
-      for (const sprite of column) {
-        if (sprite.label === stopSpritesName) {
-          // console.log("sprite.y:", sprite.y);
-          return Math.abs(sprite.y - centerLine) > 1; // true 表示还没到中心
-        }
-      }
-    }
-    return true; // 没找到就继续滚
-  }
 
   // set button action
   actionButton.on('pointerdown', function () {
@@ -315,49 +313,20 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   });
 
   app.ticker.add((time: PIXI.Ticker) => {
+    // scroll the reel as assigned direction
+    function move(reel: PIXI.Container, direction: number): void {
+      reel.y += 2 * time.deltaTime * direction;
+    }
+
     if (reelStates.reel1) {
       move(reels[0], SCROLL_DIRECTION_DOWN);
-      move(reels[1], SCROLL_DIRECTION_UP);
-      move(reels[2], SCROLL_DIRECTION_DOWN);
+      // move(reels[1], SCROLL_DIRECTION_UP);
+      // move(reels[2], SCROLL_DIRECTION_DOWN);
 
       wrap(reels[0], SPACE, SCROLL_DIRECTION_DOWN);
-      wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
-      wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
+      // wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
+      // wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
 
-      delay++;
-
-      const centerLine = SPACE * REEL_SIZE / 2;
-
-      // scroll the reel as assigned direction
-      function move(reel: PIXI.Container, direction: number): void {
-        reel.y += 2 * time.deltaTime * direction;
-      }
-
-      // wrap the reel as assigned direction
-      // happens when reel moved a space distance
-      // put last to first and rearrange
-      // reset reel position to its beginning position (REEL_SET_Y)
-      function wrap(reel: PIXI.Container, space: number, scrollDirection: number): void {
-        if (scrollDirection === SCROLL_DIRECTION_DOWN) {
-          const line = REEL_SET_Y + space;
-          const last = reel.children[reel.children.length - 1];
-          if (reel.y > line) {
-            reel.removeChild(last);
-            reel.addChildAt(last, 0);
-            arrange(reel, SPACE);
-            reel.y = reel.y - space;
-          }
-        } else if (scrollDirection === SCROLL_DIRECTION_UP) {
-          const line = REEL_SET_Y;
-          const first = reel.children[0];
-          if (reel.y < line) {
-            reel.removeChild(first);
-            reel.addChild(first);
-            arrange(reel, SPACE);
-            reel.y = reel.y + space;
-          }
-        }
-      }
     }
   });
 
