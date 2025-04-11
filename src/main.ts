@@ -186,7 +186,7 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   // happens when reel moved a space distance
   // put last to first and rearrange
   // reset reel position to its beginning position (REEL_SET_Y)
-  function wrap(reel: PIXI.Container, space: number, scrollDirection: number): void {
+  function wrap(reel: PIXI.Container, space: number, scrollDirection: number): boolean {
     if (scrollDirection === SCROLL_DIRECTION_DOWN) {
       const line = REEL_SET_Y + space;
       const last = reel.children[reel.children.length - 1];
@@ -195,17 +195,22 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
         reel.addChildAt(last, 0);
         arrange(reel, SPACE);
         reel.y = reel.y - space;
+        // after wrapped once, stopped
+        // reelStates.reel1 = false;
+        return true;   // wrap successed
       }
     } else if (scrollDirection === SCROLL_DIRECTION_UP) {
-      const line = REEL_SET_Y;
+      const line = REEL_SET_Y - space;
       const first = reel.children[0];
       if (reel.y < line) {
         reel.removeChild(first);
         reel.addChild(first);
         arrange(reel, SPACE);
         reel.y = reel.y + space;
+        return true;
       }
     }
+    return false;  // wrap failed
   }
 
     // render the action button
@@ -304,30 +309,82 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
     reel3: false,
   };
 
+  let wrapCount = {
+    reel1 : 0,
+    reel2 : 0,
+    reel3 : 0
+  };
+  const wrapTimes = {
+    reel1 : 4,
+    reel2 : 3,
+    reel3 : 2
+  }
+
   // set button action
-  actionButton.on('pointerdown', function () {
-    if (reelStates.reel1 === false) {
+  actionButton.on('pointerdown', () => {
+    if (!reelStates.reel1 && !reelStates.reel2 && !reelStates.reel3) {
+      // reset the count
+      wrapCount.reel1 = 0;
+      wrapCount.reel2 = 0;
+      wrapCount.reel3 = 0;
+  
+      console.log("开始新一轮转动");
+  
+      // set the reel states in order
       reelStates.reel1 = true;
-      // console.log('9999999');
+  
+      setTimeout(() => {
+        reelStates.reel2 = true;
+      }, 500); // 0.5s
+  
+      setTimeout(() => {
+        reelStates.reel3 = true;
+      }, 1000); // 1s
     }
   });
 
   app.ticker.add((time: PIXI.Ticker) => {
-    // scroll the reel as assigned direction
+    // Scroll the reel as assigned direction
     function move(reel: PIXI.Container, direction: number): void {
       reel.y += 2 * time.deltaTime * direction;
     }
 
     if (reelStates.reel1) {
       move(reels[0], SCROLL_DIRECTION_DOWN);
-      // move(reels[1], SCROLL_DIRECTION_UP);
-      // move(reels[2], SCROLL_DIRECTION_DOWN);
-
-      wrap(reels[0], SPACE, SCROLL_DIRECTION_DOWN);
-      // wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
-      // wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
-
+      if (wrapCount.reel1 < wrapTimes.reel1) {
+        if (wrap(reels[0], SPACE, SCROLL_DIRECTION_DOWN)) {
+          wrapCount.reel1++;
+        }
+      } else {
+        reelStates.reel1 = false;
+        console.log("Reel 1 reached the limit, stopping");
+      }
     }
+    
+    if (reelStates.reel2) {
+      move(reels[1], SCROLL_DIRECTION_UP);
+      if (wrapCount.reel2 < wrapTimes.reel2) {
+        if (wrap(reels[1], SPACE, SCROLL_DIRECTION_UP)) {
+          wrapCount.reel2++;
+        }
+      } else {
+        reelStates.reel2 = false;
+        console.log("Reel 2 reached the limit, stopping");
+      }
+    }
+    
+    if (reelStates.reel3) {
+      move(reels[2], SCROLL_DIRECTION_DOWN);
+      if (wrapCount.reel3 < wrapTimes.reel3) {
+        if (wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN)) {
+          wrapCount.reel3++;
+        }
+      } else {
+        reelStates.reel3 = false;
+        console.log("Reel 3 reached the limit, stopping");
+      }
+    }
+
   });
 
 
