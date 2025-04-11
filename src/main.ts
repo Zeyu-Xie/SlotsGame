@@ -294,11 +294,11 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   // }
 
   function checkStop(spritesArray: Sprites[], stopSpritesName: string, centerLine: number): boolean {
-    console.log("centerline:" + centerLine);
+    // console.log("centerline:" + centerLine);
     for (const column of spritesArray) {
       for (const sprite of column) {
         if (sprite.label === stopSpritesName) {
-          console.log("sprite.y:", sprite.y);
+          // console.log("sprite.y:", sprite.y);
           return Math.abs(sprite.y - centerLine) > 1; // true 表示还没到中心
         }
       }
@@ -317,60 +317,48 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   app.ticker.add((time: PIXI.Ticker) => {
     if (reelStates.reel1) {
       move(reels[0], SCROLL_DIRECTION_DOWN);
-      // move(reels[1], SCROLL_DIRECTION_UP);
-      // move(reels[2], SCROLL_DIRECTION_DOWN);
+      move(reels[1], SCROLL_DIRECTION_UP);
+      move(reels[2], SCROLL_DIRECTION_DOWN);
 
       wrap(reels[0], SPACE, SCROLL_DIRECTION_DOWN);
-      // wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
-      // wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
+      wrap(reels[1], SPACE, SCROLL_DIRECTION_UP);
+      wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN);
 
       delay++;
 
-      const centerLine =  SPACE * REEL_SIZE /2 ;
+      const centerLine = SPACE * REEL_SIZE / 2;
 
-      if (delay > 200) {
-        console.log(checkStop(spritesArray, "sprite_002", centerLine));
-
-        reelStates.reel1 = checkStop(spritesArray, "sprite_002", centerLine);
-        // delay = 0;
-
+      // scroll the reel as assigned direction
+      function move(reel: PIXI.Container, direction: number): void {
+        reel.y += 2 * time.deltaTime * direction;
       }
-    };
 
-    // scroll the reel as assigned direction
-    function move(reel: PIXI.Container, direction: number): void {
-
-      reel.y += 2 * time.deltaTime * direction;
-      console.log(reel.y);
-    }
-
-    // wrap the reel as assigned direction
-    // happens when reel moved a space distance
-    // put last to first and rearrange
-    // reset reel postion to its begining position (REEL_SET_Y)
-    function wrap(reel: PIXI.Container, space: number, scrollDirection: number): void {
-      if (scrollDirection === SCROLL_DIRECTION_DOWN) {
-        const line = REEL_SET_Y + space;
-        const last = reel.children[reel.children.length - 1];
-        if (reel.y > line) {
-          reel.removeChild(last);
-          reel.addChildAt(last, 0);
-          arrange(reel, SPACE);
-          reel.y = reel.y - space;
-        }
-      } else if (scrollDirection === SCROLL_DIRECTION_UP) {
-        const line = VISIBLE_TOP - space * 2;
-        const first = reel.children[0];
-        if (reel.y < line) {
-          reel.removeChild(first);
-          reel.addChild(first);
-          arrange(reel, SPACE);
-          reel.y = reel.y + space;
+      // wrap the reel as assigned direction
+      // happens when reel moved a space distance
+      // put last to first and rearrange
+      // reset reel position to its beginning position (REEL_SET_Y)
+      function wrap(reel: PIXI.Container, space: number, scrollDirection: number): void {
+        if (scrollDirection === SCROLL_DIRECTION_DOWN) {
+          const line = REEL_SET_Y + space;
+          const last = reel.children[reel.children.length - 1];
+          if (reel.y > line) {
+            reel.removeChild(last);
+            reel.addChildAt(last, 0);
+            arrange(reel, SPACE);
+            reel.y = reel.y - space;
+          }
+        } else if (scrollDirection === SCROLL_DIRECTION_UP) {
+          const line = REEL_SET_Y;
+          const first = reel.children[0];
+          if (reel.y < line) {
+            reel.removeChild(first);
+            reel.addChild(first);
+            arrange(reel, SPACE);
+            reel.y = reel.y + space;
+          }
         }
       }
     }
-
-
   });
 
 
