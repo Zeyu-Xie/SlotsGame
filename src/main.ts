@@ -4,130 +4,8 @@ import * as PIXI from "pixi.js";
 // define the name of the type 'PIXI.Sprite[]'
 type Sprites = PIXI.Sprite[]
 
-// generate random sprits colors
-function generateRandomColor(): number {
-  // 生成一个 0 到 16777215 之间的随机整数（即 0x000000 到 0xFFFFFF）
-  const randomColor = Math.floor(Math.random() * 16777215);
-  return randomColor;
-}
 
-// create a colum of pics
-// function createAndRenderReel(picTexture: PIXI.Texture, scale_index: number): PIXI.Container {
-//   const reel = new PIXI.Container();
 
-//   for (let i = 0; i < 9; i++) {
-//     const pic = new PIXI.Sprite(picTexture);
-//     pic.scale.set(scale_index);
-//     pic.tint = generateRandomColor()
-//     const picContainer = new PIXI.Container();
-//     picContainer.y = i * 100;
-//     picContainer.addChild(pic);
-
-//     reel.addChild(picContainer);
-//   }
-
-//   return reel
-// }
-
-// create a container filled with Sprites
-function buildReel(sprites: Sprites): PIXI.Container {
-  const reel = new PIXI.Container();
-  for (let i = 0; i < sprites.length; i++) {
-    reel.addChild(sprites[i])
-  }
-  return reel
-}
-
-// render reel
-function renderReel(reel: PIXI.Container, scale_index: number, space: number): void {
-  for (let i = 0; i < reel.children.length; i++) {
-    const sprite = reel.children[i];
-    // todo: extract this line to a function called arrange
-    sprite.y = i * space;
-    sprite.scale.set(scale_index);
-  }
-}
-
-// build and render a reel 
-function createReel(sprites: Sprites, scale_index: number, space: number): PIXI.Container {
-  const reel = buildReel(sprites)
-  renderReel(reel, scale_index, space)
-  return reel
-}
-
-// create reel array containing a certain number of reels 
-function createReels(spritesArray: Sprites[], scale_index: number, space: number): PIXI.Container[] {
-  /*create some reels by calling function createReel many times
-   * put reels into an array
-   * return this array */
-  const reels: PIXI.Container[] = []
-  for (let i = 0; i < spritesArray.length; i++) {
-    const reel = createReel(spritesArray[i], scale_index, space);
-    reels.push(reel);
-  }
-  return reels
-}
-
-// build a reel set containing reels
-function buildReelSet(reels: PIXI.Container[]): PIXI.Container {
-  const reelSet = new PIXI.Container();
-  for (let i = 0; i < reels.length; i++) {
-    reelSet.addChild(reels[i])
-  }
-  return reelSet;
-}
-
-// render reel set
-function renderReelSet(reelSet: PIXI.Container, startX: number, startY: number, gap: number): void {
-  for (let i = 0; i < reelSet.children.length; i++) {
-    const reel = reelSet.children[i];
-    reel.x = startX + i * gap;
-    reel.y = startY;
-  }
-}
-
-// create reel set
-function createReelSet(reels: PIXI.Container[], startX: number, startY: number, gap: number): PIXI.Container {
-  const reelSet = buildReelSet(reels)
-  renderReelSet(reelSet, startX, startY, gap)
-  return reelSet
-}
-
-// reposition the elements in the reel
-function arrange(reel: PIXI.Container, space: number): void {
-  for (let i = 0; i < reel.children.length; i++) {
-    const element = reel.children[i];
-    element.y = i * space;
-  }
-}
-
-// create and set the action mode of the button
-function setButtonActionMode(buttonTexture: PIXI.Sprite): PIXI.Sprite {
-  buttonTexture.eventMode = 'static';
-  buttonTexture.cursor = 'pointer';
-  return buttonTexture
-}
-
-// [Depracated] set the position of the reels
-function positionReels(reels: PIXI.Container[], startX: number, startY: number, gap: number): void {
-  for (let i = 0; i < reels.length; i++) {
-    const reel = reels[i];
-    reel.x = startX + i * gap;
-    reel.y = startY;
-  }
-}
-// [Depracated] create reels
-function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.Application): PIXI.Container[] {
-  const reels: PIXI.Container[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const reel = createAndRenderReel(texture, 1);
-    reels.push(reel);
-    app.stage.addChild(reel);
-  }
-
-  return reels;
-}
 
 (async () => {
 
@@ -157,6 +35,7 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   const MASK_BOTTOM_WIDTH = MASK_TOP_WIDTH;
   const MASK_BOTTOM_HEIGHT = MASK_TOP_HEIGHT;
 
+  const MOVE_VELOCITY = 2;
   const SCROLL_DIRECTION_DOWN = 1;
   const SCROLL_DIRECTION_UP = -1;
 
@@ -169,9 +48,170 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   // todo: change name
   const SPACE = 80;
   const REEL_NUM = 3;
-  const REEL_SIZE = 8;
+  const REEL_SIZE = 7;
   const REEL_SET_X = CENTER_X - REEL_NUM * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
+
+  // generate random sprits colors
+  function generateRandomColor(): number {
+    // 生成一个 0 到 16777215 之间的随机整数（即 0x000000 到 0xFFFFFF）
+    const randomColor = Math.floor(Math.random() * 16777215);
+    return randomColor;
+  }
+
+  // create a colum of pics
+  // function createAndRenderReel(picTexture: PIXI.Texture, scale_index: number): PIXI.Container {
+  //   const reel = new PIXI.Container();
+
+  //   for (let i = 0; i < 9; i++) {
+  //     const pic = new PIXI.Sprite(picTexture);
+  //     pic.scale.set(scale_index);
+  //     pic.tint = generateRandomColor()
+  //     const picContainer = new PIXI.Container();
+  //     picContainer.y = i * 100;
+  //     picContainer.addChild(pic);
+
+  //     reel.addChild(picContainer);
+  //   }
+
+  //   return reel
+  // }
+
+  // create a container filled with Sprites
+  function buildReel(sprites: Sprites): PIXI.Container {
+    const reel = new PIXI.Container();
+    for (let i = 0; i < sprites.length; i++) {
+      reel.addChild(sprites[i])
+    }
+    return reel
+  }
+
+  // render reel
+  function renderReel(reel: PIXI.Container, scale_index: number, space: number): void {
+    for (let i = 0; i < reel.children.length; i++) {
+      const sprite = reel.children[i];
+      // todo: extract this line to a function called arrange
+      sprite.y = i * space;
+      sprite.scale.set(scale_index);
+    }
+  }
+
+  // build and render a reel 
+  function createReel(sprites: Sprites, scale_index: number, space: number): PIXI.Container {
+    const reel = buildReel(sprites)
+    renderReel(reel, scale_index, space)
+    return reel
+  }
+
+  // create reel array containing a certain number of reels 
+  function createReels(spritesArray: Sprites[], scale_index: number, space: number): PIXI.Container[] {
+    /*create some reels by calling function createReel many times
+     * put reels into an array
+     * return this array */
+    const reels: PIXI.Container[] = []
+    for (let i = 0; i < spritesArray.length; i++) {
+      const reel = createReel(spritesArray[i], scale_index, space);
+      reels.push(reel);
+    }
+    return reels
+  }
+
+  // build a reel set containing reels
+  function buildReelSet(reels: PIXI.Container[]): PIXI.Container {
+    const reelSet = new PIXI.Container();
+    for (let i = 0; i < reels.length; i++) {
+      reelSet.addChild(reels[i])
+    }
+    return reelSet;
+  }
+
+  // render reel set
+  function renderReelSet(reelSet: PIXI.Container, startX: number, startY: number, gap: number): void {
+    for (let i = 0; i < reelSet.children.length; i++) {
+      const reel = reelSet.children[i];
+      reel.x = startX + i * gap;
+      reel.y = startY;
+    }
+  }
+
+  // create reel set
+  function createReelSet(reels: PIXI.Container[], startX: number, startY: number, gap: number): PIXI.Container {
+    const reelSet = buildReelSet(reels)
+    renderReelSet(reelSet, startX, startY, gap)
+    return reelSet
+  }
+
+  // Scroll the reel as assigned direction
+  function move(reel: PIXI.Container, direction: number, deltaTime: number, velocity: number): void {
+    reel.y += velocity * deltaTime * direction;
+  }
+
+  // wrap the reel as assigned direction : put last to first and reposition
+  // function wrap(reel: PIXI.Container, space: number, direction: number): void {
+  //   if (direction === SCROLL_DIRECTION_DOWN) {
+  //     const last = reel.children[reel.children.length - 1];
+  //     reel.removeChild(last);
+  //     reel.addChildAt(last, 0);
+  //   } else if (direction === SCROLL_DIRECTION_UP) {
+  //     const first = reel.children[0];
+  //     reel.removeChild(first);
+  //     reel.addChild(first);
+  //   }
+  //   arrange(reel, space);
+  //   reel.y = 0;
+  // }
+
+  function wrap(reel: PIXI.Container, space: number, fromIndex: number, toIndex: number): void {
+    const removedSprite = reel.children[fromIndex];
+    reel.removeChild(removedSprite);
+    reel.addChildAt(removedSprite, toIndex);
+    arrange(reel, space);
+  }
+
+  // check wrap
+  function checkWrap(reel: PIXI.Container,direction:number): boolean{
+    if(direction === SCROLL_DIRECTION_DOWN && reel.y >= REEL_SET_Y + SPACE){
+      return true;
+    } else if (direction === SCROLL_DIRECTION_UP && reel.y <= REEL_SET_Y - SPACE){
+      return true;
+    }
+    return false;
+  }
+
+  // reposition
+  function reposition (reposition: number): number{
+    return reposition
+  }
+
+  // move and wrap
+  function moveAndWrap(reel: PIXI.Container, space: number, deltaTime: number, direction: number, velocity: number): void {
+    move(reel, direction, deltaTime, velocity)
+
+    if (checkWrap(reel,direction) && direction===SCROLL_DIRECTION_DOWN) {
+      wrap(reel, space, REEL_SIZE - 1, 0);
+      reel.y = reposition(REEL_SET_Y); 
+    }
+
+    if (checkWrap(reel,direction) && direction===SCROLL_DIRECTION_UP) {
+      wrap(reel, space, 0, REEL_SIZE - 1);
+      reel.y = reposition(REEL_SET_Y);
+    }
+  }
+
+  // reposition the elements in the reel
+  function arrange(reel: PIXI.Container, space: number): void {
+    for (let i = 0; i < reel.children.length; i++) {
+      const element = reel.children[i];
+      element.y = i * space;
+    }
+  }
+
+  // create and set the action mode of the button
+  function setButtonActionMode(buttonTexture: PIXI.Sprite): PIXI.Sprite {
+    buttonTexture.eventMode = 'static';
+    buttonTexture.cursor = 'pointer';
+    return buttonTexture
+  }
 
   // create a mask
   function createMask(maskX: number, maskY: number, maskWidth: number, maskHeight: number, maskColor: number, maskAlpha: number): { mask: PIXI.Graphics } {
@@ -182,38 +222,8 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
     return { mask };
   }
 
-  // wrap the reel as assigned direction
-  // happens when reel moved a space distance
-  // put last to first and rearrange
-  // reset reel position to its beginning position (REEL_SET_Y)
-  function wrap(reel: PIXI.Container, space: number, scrollDirection: number): boolean {
-    if (scrollDirection === SCROLL_DIRECTION_DOWN) {
-      const line = REEL_SET_Y + space;
-      const last = reel.children[reel.children.length - 1];
-      if (reel.y > line) {
-        reel.removeChild(last);
-        reel.addChildAt(last, 0);
-        arrange(reel, SPACE);
-        reel.y = reel.y - space;
-        // after wrapped once, stopped
-        // reelStates.reel1 = false;
-        return true;   // wrap successed
-      }
-    } else if (scrollDirection === SCROLL_DIRECTION_UP) {
-      const line = REEL_SET_Y - space;
-      const first = reel.children[0];
-      if (reel.y < line) {
-        reel.removeChild(first);
-        reel.addChild(first);
-        arrange(reel, SPACE);
-        reel.y = reel.y + space;
-        return true;
-      }
-    }
-    return false;  // wrap failed
-  }
 
-    // render the action button
+  // render the action button
   /* create a new button container  
    * add button sprite into the button container
    * set the position and scale of the button container */
@@ -274,13 +284,13 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
     for (let j = 0; j < REEL_SIZE; j++) {
       const sprite = new PIXI.Sprite(textures.gift)
       sprite.tint = generateRandomColor();
-      sprite.label = "sprite_00"+j
+      sprite.label = "sprite_00" + j
       sprites.push(sprite);
-      console.log((sprite as any).id); 
+      console.log((sprite as any).id);
     }
     spritesArray.push(sprites)
   }
-  
+
   const reels = createReels(spritesArray, SCALE, SPACE);
   const reelSet = createReelSet(reels, REEL_SET_X, REEL_SET_Y, REEL_GAP);
   app.stage.addChild(reelSet);
@@ -300,90 +310,55 @@ function createReelsDepracated(texture: PIXI.Texture, count: number, app: PIXI.A
   // create and render button
   const actionButton = createAndRenderButton(setButtonActionMode(actionButtonSprite), AVTIONBUTTON_X, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
 
-   // --------------------------------------------------------
+  // --------------------------------------------------------
 
   // let reel Spinning state = false;
-  let reelStates = {
-    reel1: false,
-    reel2: false,
-    reel3: false,
-  };
+  // let reelStates = {
+  //   reel1: false,
+  //   reel2: false,
+  //   reel3: false,
+  // };
 
-  let wrapCount = {
-    reel1 : 0,
-    reel2 : 0,
-    reel3 : 0
-  };
-  const wrapTimes = {
-    reel1 : 4,
-    reel2 : 3,
-    reel3 : 2
-  }
+  // let wrapCount = {
+  //   reel1: 0,
+  //   reel2: 0,
+  //   reel3: 0,
+  // };
+  // const wrapTimes = {
+  //   reel1: 4,
+  //   reel2: 3,
+  //   reel3: 2,
+  // }
 
   // set button action
-  actionButton.on('pointerdown', () => {
-    if (!reelStates.reel1 && !reelStates.reel2 && !reelStates.reel3) {
-      // reset the count
-      wrapCount.reel1 = 0;
-      wrapCount.reel2 = 0;
-      wrapCount.reel3 = 0;
-  
-      console.log("开始新一轮转动");
-  
-      // set the reel states in order
-      reelStates.reel1 = true;
-  
-      setTimeout(() => {
-        reelStates.reel2 = true;
-      }, 500); // 0.5s
-  
-      setTimeout(() => {
-        reelStates.reel3 = true;
-      }, 1000); // 1s
-    }
-  });
+  // actionButton.on('pointerdown', () => {
+  //   if (!reelStates.reel1 && !reelStates.reel2 && !reelStates.reel3) {
+  //     // reset the count
+  //     wrapCount.reel1 = 0;
+  //     wrapCount.reel2 = 0;
+  //     wrapCount.reel3 = 0;
+
+  //     console.log("开始新一轮转动");
+
+  //     // set the reel states in order
+  //     reelStates.reel1 = true;
+
+  //     setTimeout(() => {
+  //       reelStates.reel2 = true;
+  //     }, 500); // 0.5s
+
+  //     setTimeout(() => {
+  //       reelStates.reel3 = true;
+  //     }, 1000); // 1s
+  //   }
+  // });
 
   app.ticker.add((time: PIXI.Ticker) => {
-    // Scroll the reel as assigned direction
-    function move(reel: PIXI.Container, direction: number): void {
-      reel.y += 2 * time.deltaTime * direction;
-    }
 
-    if (reelStates.reel1) {
-      move(reels[0], SCROLL_DIRECTION_DOWN);
-      if (wrapCount.reel1 < wrapTimes.reel1) {
-        if (wrap(reels[0], SPACE, SCROLL_DIRECTION_DOWN)) {
-          wrapCount.reel1++;
-        }
-      } else {
-        reelStates.reel1 = false;
-        console.log("Reel 1 reached the limit, stopping");
-      }
-    }
-    
-    if (reelStates.reel2) {
-      move(reels[1], SCROLL_DIRECTION_UP);
-      if (wrapCount.reel2 < wrapTimes.reel2) {
-        if (wrap(reels[1], SPACE, SCROLL_DIRECTION_UP)) {
-          wrapCount.reel2++;
-        }
-      } else {
-        reelStates.reel2 = false;
-        console.log("Reel 2 reached the limit, stopping");
-      }
-    }
-    
-    if (reelStates.reel3) {
-      move(reels[2], SCROLL_DIRECTION_DOWN);
-      if (wrapCount.reel3 < wrapTimes.reel3) {
-        if (wrap(reels[2], SPACE, SCROLL_DIRECTION_DOWN)) {
-          wrapCount.reel3++;
-        }
-      } else {
-        reelStates.reel3 = false;
-        console.log("Reel 3 reached the limit, stopping");
-      }
-    }
+    moveAndWrap(reels[0], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, MOVE_VELOCITY);
+    moveAndWrap(reels[1], SPACE, time.deltaTime, SCROLL_DIRECTION_UP, MOVE_VELOCITY);
+    moveAndWrap(reels[2], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, MOVE_VELOCITY);
+
 
   });
 
