@@ -4,9 +4,6 @@ import * as PIXI from "pixi.js";
 // define the name of the type 'PIXI.Sprite[]'
 type Sprites = PIXI.Sprite[]
 
-
-
-
 (async () => {
 
   // Create and initialize a new application
@@ -36,6 +33,7 @@ type Sprites = PIXI.Sprite[]
   const MASK_BOTTOM_HEIGHT = MASK_TOP_HEIGHT;
 
   const MOVE_VELOCITY = 2;
+  const MAX_VELOCITY = 5;
   const SCROLL_DIRECTION_DOWN = 1;
   const SCROLL_DIRECTION_UP = -1;
 
@@ -45,12 +43,47 @@ type Sprites = PIXI.Sprite[]
 
   const STOP_SPRITES_INDEX_1 = 2;
 
-  // todo: change name
   const SPACE = 80;
   const REEL_NUM = 3;
   const REEL_SIZE = 7;
   const REEL_SET_X = CENTER_X - REEL_NUM * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
+
+  class ReelState {
+    canMove: boolean;
+    velocity: number;
+    canDeceleration: boolean;
+    canStop: boolean;
+    canWrap: boolean;
+    direction: number;
+    stopIndex: string;
+    reel: PIXI.Container;
+
+    constructor(direction: number, reel: PIXI.Container) {
+      this.canMove = false;
+      this.velocity = 0;
+      this.canDeceleration = false;
+      this.canStop = false;
+      this.canWrap = false;
+      this.direction = direction;
+      this.stopIndex = '0';
+      this.reel = reel;
+    }
+
+    get isStopped(): boolean {
+      return this.velocity === 0;
+    }
+
+    get canAcc(): boolean {
+      return this.canMove === true && this.velocity < MAX_VELOCITY
+    }
+
+    get isAtStartPosition(): boolean {
+      return this.reel.y === REEL_SET_Y;
+    }
+
+  }
+
 
   // generate random sprits colors
   function generateRandomColor(): number {
@@ -58,24 +91,6 @@ type Sprites = PIXI.Sprite[]
     const randomColor = Math.floor(Math.random() * 16777215);
     return randomColor;
   }
-
-  // create a colum of pics
-  // function createAndRenderReel(picTexture: PIXI.Texture, scale_index: number): PIXI.Container {
-  //   const reel = new PIXI.Container();
-
-  //   for (let i = 0; i < 9; i++) {
-  //     const pic = new PIXI.Sprite(picTexture);
-  //     pic.scale.set(scale_index);
-  //     pic.tint = generateRandomColor()
-  //     const picContainer = new PIXI.Container();
-  //     picContainer.y = i * 100;
-  //     picContainer.addChild(pic);
-
-  //     reel.addChild(picContainer);
-  //   }
-
-  //   return reel
-  // }
 
   // create a container filled with Sprites
   function buildReel(sprites: Sprites): PIXI.Container {
@@ -146,21 +161,6 @@ type Sprites = PIXI.Sprite[]
     reel.y += velocity * deltaTime * direction;
   }
 
-  // wrap the reel as assigned direction : put last to first and reposition
-  // function wrap(reel: PIXI.Container, space: number, direction: number): void {
-  //   if (direction === SCROLL_DIRECTION_DOWN) {
-  //     const last = reel.children[reel.children.length - 1];
-  //     reel.removeChild(last);
-  //     reel.addChildAt(last, 0);
-  //   } else if (direction === SCROLL_DIRECTION_UP) {
-  //     const first = reel.children[0];
-  //     reel.removeChild(first);
-  //     reel.addChild(first);
-  //   }
-  //   arrange(reel, space);
-  //   reel.y = 0;
-  // }
-
   function wrap(reel: PIXI.Container, space: number, fromIndex: number, toIndex: number): void {
     const removedSprite = reel.children[fromIndex];
     reel.removeChild(removedSprite);
@@ -169,17 +169,17 @@ type Sprites = PIXI.Sprite[]
   }
 
   // check wrap
-  function checkWrap(reel: PIXI.Container,direction:number): boolean{
-    if(direction === SCROLL_DIRECTION_DOWN && reel.y >= REEL_SET_Y + SPACE){
+  function checkWrap(reel: PIXI.Container, direction: number): boolean {
+    if (direction === SCROLL_DIRECTION_DOWN && reel.y >= REEL_SET_Y + SPACE) {
       return true;
-    } else if (direction === SCROLL_DIRECTION_UP && reel.y <= REEL_SET_Y - SPACE){
+    } else if (direction === SCROLL_DIRECTION_UP && reel.y <= REEL_SET_Y - SPACE) {
       return true;
     }
     return false;
   }
 
   // reposition
-  function reposition (reposition: number): number{
+  function reposition(reposition: number): number {
     return reposition
   }
 
@@ -187,12 +187,12 @@ type Sprites = PIXI.Sprite[]
   function moveAndWrap(reel: PIXI.Container, space: number, deltaTime: number, direction: number, velocity: number): void {
     move(reel, direction, deltaTime, velocity)
 
-    if (checkWrap(reel,direction) && direction===SCROLL_DIRECTION_DOWN) {
+    if (checkWrap(reel, direction) && direction === SCROLL_DIRECTION_DOWN) {
       wrap(reel, space, REEL_SIZE - 1, 0);
-      reel.y = reposition(REEL_SET_Y); 
+      reel.y = reposition(REEL_SET_Y);
     }
 
-    if (checkWrap(reel,direction) && direction===SCROLL_DIRECTION_UP) {
+    if (checkWrap(reel, direction) && direction === SCROLL_DIRECTION_UP) {
       wrap(reel, space, 0, REEL_SIZE - 1);
       reel.y = reposition(REEL_SET_Y);
     }
@@ -247,6 +247,7 @@ type Sprites = PIXI.Sprite[]
   const textures = await PIXI.Assets.loadBundle("assets");
 
   const actionButtonSprite = new PIXI.Sprite(textures.bunny);
+  const stopButtonSprite = new PIXI.Sprite(textures.bunny);
 
   /* create some sprites 
    * put all sprites into spritesArray */
@@ -284,7 +285,7 @@ type Sprites = PIXI.Sprite[]
     for (let j = 0; j < REEL_SIZE; j++) {
       const sprite = new PIXI.Sprite(textures.gift)
       sprite.tint = generateRandomColor();
-      sprite.label = "sprite_00" + j
+      sprite.label = "" + j;
       sprites.push(sprite);
       console.log((sprite as any).id);
     }
@@ -309,6 +310,8 @@ type Sprites = PIXI.Sprite[]
 
   // create and render button
   const actionButton = createAndRenderButton(setButtonActionMode(actionButtonSprite), AVTIONBUTTON_X, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
+  const stopButton = createAndRenderButton(setButtonActionMode(stopButtonSprite), AVTIONBUTTON_X + 100, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
+
 
   // --------------------------------------------------------
 
@@ -331,33 +334,35 @@ type Sprites = PIXI.Sprite[]
   // }
 
   // set button action
-  // actionButton.on('pointerdown', () => {
-  //   if (!reelStates.reel1 && !reelStates.reel2 && !reelStates.reel3) {
-  //     // reset the count
-  //     wrapCount.reel1 = 0;
-  //     wrapCount.reel2 = 0;
-  //     wrapCount.reel3 = 0;
 
-  //     console.log("开始新一轮转动");
 
-  //     // set the reel states in order
-  //     reelStates.reel1 = true;
+  const reel1State = new ReelState(SCROLL_DIRECTION_DOWN, reels[0])
 
-  //     setTimeout(() => {
-  //       reelStates.reel2 = true;
-  //     }, 500); // 0.5s
+  actionButton.on('pointerdown', () => {
+    reel1State.canMove = true;
+    reel1State.canStop = false;
+  });
 
-  //     setTimeout(() => {
-  //       reelStates.reel3 = true;
-  //     }, 1000); // 1s
-  //   }
-  // });
+  stopButton.on('pointerdown', () => {
+    reel1State.canStop = true;
+  });
 
   app.ticker.add((time: PIXI.Ticker) => {
 
-    moveAndWrap(reels[0], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, MOVE_VELOCITY);
-    moveAndWrap(reels[1], SPACE, time.deltaTime, SCROLL_DIRECTION_UP, MOVE_VELOCITY);
-    moveAndWrap(reels[2], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, MOVE_VELOCITY);
+    if (reel1State.canMove === true) {
+      moveAndWrap(reels[0], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, MOVE_VELOCITY);
+    }
+
+    if (reel1State.canStop === true) {
+      if (reel1State.isAtStartPosition && reels[0].children[0].label === reel1State.stopIndex)
+        reel1State.canMove = false;
+    }
+
+    
+
+    // moveAndWrap(reels[1], SPACE, time.deltaTime, SCROLL_DIRECTION_UP, MOVE_VELOCITY);
+    // moveAndWrap(reels[2], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, MOVE_VELOCITY);
+
 
 
   });
