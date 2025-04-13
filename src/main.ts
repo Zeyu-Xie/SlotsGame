@@ -1,5 +1,6 @@
 // import { Application, Assets, Sprite } from "pixi.js";
 import * as PIXI from "pixi.js";
+import { gsap } from 'gsap';
 
 // define the name of the type 'PIXI.Sprite[]'
 type Sprites = PIXI.Sprite[]
@@ -32,10 +33,14 @@ type Sprites = PIXI.Sprite[]
   const MASK_BOTTOM_WIDTH = MASK_TOP_WIDTH;
   const MASK_BOTTOM_HEIGHT = MASK_TOP_HEIGHT;
 
-  const MOVE_VELOCITY = 2;
-  const MAX_VELOCITY = 5;
   const SCROLL_DIRECTION_DOWN = 1;
   const SCROLL_DIRECTION_UP = -1;
+
+  const MOVE_VELOCITY = 2;
+  const MAX_VELOCITY = 50;
+  const MIN_VELOCITY = 2;
+  const VELOCITY_INCREASE_RATE = 0.2;
+  const VELOCITY_DECREASE_RATE = 0.5;
 
   const AVTIONBUTTON_X = 0;
   const ACTIONBUTTON_Y = 0;
@@ -78,8 +83,9 @@ type Sprites = PIXI.Sprite[]
       return this.canMove === true && this.velocity < MAX_VELOCITY
     }
 
+
     get isAtStartPosition(): boolean {
-      return this.reel.y === REEL_SET_Y;
+      return Math.abs(this.reel.y - REEL_SET_Y) < 2;
     }
 
   }
@@ -158,7 +164,11 @@ type Sprites = PIXI.Sprite[]
 
   // Scroll the reel as assigned direction
   function move(reel: PIXI.Container, direction: number, deltaTime: number, velocity: number): void {
-    reel.y += velocity * deltaTime * direction;
+    if (Math.abs(REEL_SET_Y - (reel.y + velocity * deltaTime * direction)) < SPACE) {
+      reel.y += velocity * deltaTime * direction;
+    } else {
+      reel.y = REEL_SET_Y + direction * SPACE;
+    }
   }
 
   function wrap(reel: PIXI.Container, space: number, fromIndex: number, toIndex: number): void {
@@ -313,52 +323,67 @@ type Sprites = PIXI.Sprite[]
   const stopButton = createAndRenderButton(setButtonActionMode(stopButtonSprite), AVTIONBUTTON_X + 100, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
 
 
-  // --------------------------------------------------------
-
-  // let reel Spinning state = false;
-  // let reelStates = {
-  //   reel1: false,
-  //   reel2: false,
-  //   reel3: false,
-  // };
-
-  // let wrapCount = {
-  //   reel1: 0,
-  //   reel2: 0,
-  //   reel3: 0,
-  // };
-  // const wrapTimes = {
-  //   reel1: 4,
-  //   reel2: 3,
-  //   reel3: 2,
-  // }
-
-  // set button action
-
-
   const reel1State = new ReelState(SCROLL_DIRECTION_DOWN, reels[0])
 
   actionButton.on('pointerdown', () => {
     reel1State.canMove = true;
     reel1State.canStop = false;
+    reel1State.canDeceleration = false;
+    reel1State.velocity = 0;
   });
 
   stopButton.on('pointerdown', () => {
-    reel1State.canStop = true;
+    reel1State.canDeceleration = true;
   });
 
   app.ticker.add((time: PIXI.Ticker) => {
 
     if (reel1State.canMove === true) {
-      moveAndWrap(reels[0], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, MOVE_VELOCITY);
+      moveAndWrap(reels[0], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, reel1State.velocity);
+    }
+
+    if (reel1State.canAcc) {
+      if (reel1State.velocity < MAX_VELOCITY) {
+        reel1State.velocity += VELOCITY_INCREASE_RATE;
+
+        console.log(reel1State.velocity);
+      }
+    }
+
+
+    if (reel1State.canDeceleration) {
+      if (reel1State.velocity > 0 && reels[0].y !== REEL_SET_Y) {
+        reel1State.velocity -= VELOCITY_DECREASE_RATE
+      }
+      if (reel1State.velocity < MIN_VELOCITY) {
+        reel1State.velocity = MIN_VELOCITY;
+        reel1State.canStop = true;
+      }
     }
 
     if (reel1State.canStop === true) {
-      if (reel1State.isAtStartPosition && reels[0].children[0].label === reel1State.stopIndex)
+      if (reel1State.isAtStartPosition && reels[0].children[0].label === reel1State.stopIndex) {
         reel1State.canMove = false;
+        gsap.to(reel1State.reel, {
+          y: REEL_SET_Y + 10,     // 向上移动 10px
+          duration: 0.05,      // 每次移动时长
+          yoyo: true,         // 来回运动
+          repeat: 2,         // 无限循环
+          ease: "sine.inOut"  // 平滑缓动
+        });
+      }
+
+    }
+    {
+
     }
 
-    
+
+    // console.log("velocity", reel1State.velocity.toFixed(3));
+    // console.log(reel1State.canMove);
+
+
+
 
     // moveAndWrap(reels[1], SPACE, time.deltaTime, SCROLL_DIRECTION_UP, MOVE_VELOCITY);
     // moveAndWrap(reels[2], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, MOVE_VELOCITY);
@@ -368,6 +393,8 @@ type Sprites = PIXI.Sprite[]
   });
 
 
+
 })();
+
 
 
