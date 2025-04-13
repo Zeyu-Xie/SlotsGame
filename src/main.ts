@@ -36,10 +36,10 @@ type Sprites = PIXI.Sprite[]
   const SCROLL_DIRECTION_DOWN = 1;
   const SCROLL_DIRECTION_UP = -1;
 
-  const MOVE_VELOCITY = 2;
+  const MOVE_VELOCITY = 5;
   const MAX_VELOCITY = 50;
-  const MIN_VELOCITY = 2;
-  const VELOCITY_INCREASE_RATE = 0.2;
+  const MIN_VELOCITY = 13;
+  const VELOCITY_INCREASE_RATE = 0.9;
   const VELOCITY_DECREASE_RATE = 0.5;
 
   const AVTIONBUTTON_X = 0;
@@ -63,6 +63,7 @@ type Sprites = PIXI.Sprite[]
     direction: number;
     stopIndex: string;
     reel: PIXI.Container;
+    decRate: number
 
     constructor(direction: number, reel: PIXI.Container) {
       this.canMove = false;
@@ -73,6 +74,7 @@ type Sprites = PIXI.Sprite[]
       this.direction = direction;
       this.stopIndex = '0';
       this.reel = reel;
+      this.decRate = VELOCITY_DECREASE_RATE
     }
 
     get isStopped(): boolean {
@@ -80,9 +82,8 @@ type Sprites = PIXI.Sprite[]
     }
 
     get canAcc(): boolean {
-      return this.canMove === true && this.velocity < MAX_VELOCITY
+      return this.canMove === true && this.velocity < MAX_VELOCITY && !this.canDeceleration
     }
-
 
     get isAtStartPosition(): boolean {
       return Math.abs(this.reel.y - REEL_SET_Y) < 2;
@@ -90,12 +91,20 @@ type Sprites = PIXI.Sprite[]
 
   }
 
-
   // generate random sprits colors
   function generateRandomColor(): number {
     // 生成一个 0 到 16777215 之间的随机整数（即 0x000000 到 0xFFFFFF）
     const randomColor = Math.floor(Math.random() * 16777215);
     return randomColor;
+  }
+
+  // create a mask
+  function createMask(maskX: number, maskY: number, maskWidth: number, maskHeight: number, maskColor: number, maskAlpha: number): { mask: PIXI.Graphics } {
+    const mask = new PIXI.Graphics();
+    mask.rect(maskX, maskY, maskWidth, maskHeight);
+    mask.fill({ color: maskColor, alpha: maskAlpha });
+    app.stage.addChild(mask);
+    return { mask };
   }
 
   // create a container filled with Sprites
@@ -162,6 +171,8 @@ type Sprites = PIXI.Sprite[]
     return reelSet
   }
 
+
+
   // Scroll the reel as assigned direction
   function move(reel: PIXI.Container, direction: number, deltaTime: number, velocity: number): void {
     if (Math.abs(REEL_SET_Y - (reel.y + velocity * deltaTime * direction)) < SPACE) {
@@ -216,6 +227,68 @@ type Sprites = PIXI.Sprite[]
     }
   }
 
+  // acceleration
+  function acceleration(reelState: ReelState, maxVelocity: number, increaseRate: number): void {
+    if (reelState.velocity < maxVelocity) {
+      reelState.velocity += increaseRate;
+    }
+  }
+  
+  // deceleration
+  function deceleration(reelState: ReelState, reel: PIXI.Container, targetY: number) {
+    if (reelState.velocity > 0 && reel.y !== targetY) {
+      reelState.velocity -= reelState.decRate;
+  
+      if (reelState.decRate > 0.02) {
+        reelState.decRate -= 0.0005;
+      }
+      console.log(reelState.decRate);
+    }
+  
+    if (reelState.velocity < MIN_VELOCITY) {
+      reelState.velocity = MIN_VELOCITY;
+      reelState.canStop = true;
+    }
+  }
+
+  // stop
+  function stopReelWithBounce(reelState: ReelState, currentLabel: string, targetY: number) {
+    const isLabelMatched = currentLabel === reelState.stopIndex;
+  
+    if (reelState.isAtStartPosition && isLabelMatched) {
+      reelState.canMove = false;
+      reelState.decRate = VELOCITY_DECREASE_RATE;
+  
+      gsap.to(reelState.reel, {
+        y: targetY + 10,       // 向上移动 10px
+        duration: 0.03,     // 每次移动时长
+        yoyo: true,     // 来回运动
+        repeat: 2,     // 无限循环
+        ease: "sine.inOut"  // 平滑缓动
+      });
+    }
+  }
+
+  // run
+  function run(reelState: ReelState, reel: PIXI.Container, deltaTime: number, targetY: number, direction:number) {
+    if (reelState.canMove) {
+      moveAndWrap(reelState.reel, SPACE, deltaTime, direction, reelState.velocity);
+    }
+  
+    if (reelState.canAcc) {
+      acceleration(reelState, MAX_VELOCITY, VELOCITY_INCREASE_RATE);
+    }
+  
+    if (reelState.canDeceleration) {
+      deceleration(reelState, reel, targetY);
+    }
+  
+    if (reelState.canStop) {
+      stopReelWithBounce(reelState, reel.children[0].label, targetY);
+    }
+  } 
+  
+
   // create and set the action mode of the button
   function setButtonActionMode(buttonTexture: PIXI.Sprite): PIXI.Sprite {
     buttonTexture.eventMode = 'static';
@@ -223,20 +296,8 @@ type Sprites = PIXI.Sprite[]
     return buttonTexture
   }
 
-  // create a mask
-  function createMask(maskX: number, maskY: number, maskWidth: number, maskHeight: number, maskColor: number, maskAlpha: number): { mask: PIXI.Graphics } {
-    const mask = new PIXI.Graphics();
-    mask.rect(maskX, maskY, maskWidth, maskHeight);
-    mask.fill({ color: maskColor, alpha: maskAlpha });
-    app.stage.addChild(mask);
-    return { mask };
-  }
 
-
-  // render the action button
-  /* create a new button container  
-   * add button sprite into the button container
-   * set the position and scale of the button container */
+  // create and render the action button
   function createAndRenderButton(buttonSprite: PIXI.Sprite, buttonX: number, buttonY: number, scale_index: number): PIXI.Container {
     buttonSprite.x = buttonX;
     buttonSprite.y = buttonY;
@@ -244,6 +305,7 @@ type Sprites = PIXI.Sprite[]
     app.stage.addChild(buttonSprite);
     return buttonSprite;
   }
+
 
   //load the assets
   PIXI.Assets.addBundle("assets", {
@@ -307,13 +369,6 @@ type Sprites = PIXI.Sprite[]
   app.stage.addChild(reelSet);
   // app.stage.addChild(createReelSet(createReels(spritesArray, SCALE, SPACE), REEL_SET_X, REEL_SET_Y, REEL_GAP))
 
-  // create centerLine
-  // const centerLine = new PIXI.Graphics();
-  // centerLine.moveTo(0, app.screen.height / 2);
-  // centerLine.lineTo(app.screen.width, app.screen.height / 2);
-  // centerLine.stroke({ width: 2, color: 0x000000, alpha: 1 });
-  // app.stage.addChild(centerLine);
-
   // create top and bottom masks
   createMask(MASK_TOP_X, MASK_TOP_Y, MASK_TOP_WIDTH, MASK_TOP_HEIGHT, MASK_COLOR, MASK_ALPHA)
   createMask(MASK_BOTTOM_X, MASK_BOTTOM_Y, MASK_BOTTOM_WIDTH, MASK_BOTTOM_HEIGHT, MASK_COLOR, MASK_ALPHA)
@@ -324,71 +379,42 @@ type Sprites = PIXI.Sprite[]
 
 
   const reel1State = new ReelState(SCROLL_DIRECTION_DOWN, reels[0])
+  const reel2State = new ReelState(SCROLL_DIRECTION_UP, reels[1])
+  const reel3State = new ReelState(SCROLL_DIRECTION_DOWN, reels[2])
+
+
+  // todo: add states of all reels here
+  const reelStates: ReelState[] = [
+    reel1State,
+    reel2State,
+    reel3State
+  ]
 
   actionButton.on('pointerdown', () => {
-    reel1State.canMove = true;
-    reel1State.canStop = false;
-    reel1State.canDeceleration = false;
-    reel1State.velocity = 0;
+    // reel1State.canMove = true;
+    // reel1State.canStop = false;
+    // reel1State.canDeceleration = false;
+    // reel1State.velocity = 0;
+    reelStates.forEach((reel) => {
+      reel.canMove = true;
+      reel.canStop = false;
+      reel.canDeceleration = false;
+      reel.velocity = 0;
+    });
   });
 
   stopButton.on('pointerdown', () => {
-    reel1State.canDeceleration = true;
+    // reel1State.canDeceleration = true;
+    reelStates.forEach((reel) => {
+      reel.canDeceleration = true;
+    });
   });
 
   app.ticker.add((time: PIXI.Ticker) => {
 
-    if (reel1State.canMove === true) {
-      moveAndWrap(reels[0], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, reel1State.velocity);
-    }
-
-    if (reel1State.canAcc) {
-      if (reel1State.velocity < MAX_VELOCITY) {
-        reel1State.velocity += VELOCITY_INCREASE_RATE;
-
-        console.log(reel1State.velocity);
-      }
-    }
-
-
-    if (reel1State.canDeceleration) {
-      if (reel1State.velocity > 0 && reels[0].y !== REEL_SET_Y) {
-        reel1State.velocity -= VELOCITY_DECREASE_RATE
-      }
-      if (reel1State.velocity < MIN_VELOCITY) {
-        reel1State.velocity = MIN_VELOCITY;
-        reel1State.canStop = true;
-      }
-    }
-
-    if (reel1State.canStop === true) {
-      if (reel1State.isAtStartPosition && reels[0].children[0].label === reel1State.stopIndex) {
-        reel1State.canMove = false;
-        gsap.to(reel1State.reel, {
-          y: REEL_SET_Y + 10,     // 向上移动 10px
-          duration: 0.05,      // 每次移动时长
-          yoyo: true,         // 来回运动
-          repeat: 2,         // 无限循环
-          ease: "sine.inOut"  // 平滑缓动
-        });
-      }
-
-    }
-    {
-
-    }
-
-
-    // console.log("velocity", reel1State.velocity.toFixed(3));
-    // console.log(reel1State.canMove);
-
-
-
-
-    // moveAndWrap(reels[1], SPACE, time.deltaTime, SCROLL_DIRECTION_UP, MOVE_VELOCITY);
-    // moveAndWrap(reels[2], SPACE, time.deltaTime, SCROLL_DIRECTION_DOWN, MOVE_VELOCITY);
-
-
+    run(reel1State, reels[0], time.deltaTime, REEL_SET_Y, SCROLL_DIRECTION_DOWN);
+    run(reel2State, reels[1], time.deltaTime, REEL_SET_Y, SCROLL_DIRECTION_UP);
+    run(reel3State, reels[2], time.deltaTime, REEL_SET_Y, SCROLL_DIRECTION_DOWN);
 
   });
 
@@ -397,4 +423,9 @@ type Sprites = PIXI.Sprite[]
 })();
 
 
+/*
+  todo:
+    1. extract all the code in ticker into one function called run which only needs one paramemter of type ReelState
+    2. implement states array to manage states for all the reels
+*/
 
