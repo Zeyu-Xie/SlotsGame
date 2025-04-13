@@ -49,7 +49,7 @@ type Sprites = PIXI.Sprite[]
   const STOP_SPRITES_INDEX_1 = 2;
 
   const SPACE = 80;
-  const REEL_NUM = 3;
+  const REEL_NUM = 6;
   const REEL_SIZE = 7;
   const REEL_SET_X = CENTER_X - REEL_NUM * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
@@ -233,18 +233,18 @@ type Sprites = PIXI.Sprite[]
       reelState.velocity += increaseRate;
     }
   }
-  
+
   // deceleration
-  function deceleration(reelState: ReelState, reel: PIXI.Container, targetY: number) {
-    if (reelState.velocity > 0 && reel.y !== targetY) {
+  function deceleration(reelState: ReelState) {
+    if (reelState.velocity > MIN_VELOCITY) {
       reelState.velocity -= reelState.decRate;
-  
+
       if (reelState.decRate > 0.02) {
         reelState.decRate -= 0.0005;
       }
       console.log(reelState.decRate);
     }
-  
+
     if (reelState.velocity < MIN_VELOCITY) {
       reelState.velocity = MIN_VELOCITY;
       reelState.canStop = true;
@@ -252,15 +252,15 @@ type Sprites = PIXI.Sprite[]
   }
 
   // stop
-  function stopReelWithBounce(reelState: ReelState, currentLabel: string, targetY: number) {
-    const isLabelMatched = currentLabel === reelState.stopIndex;
-  
+  function stopReelWithBounce(reelState: ReelState) {
+    const isLabelMatched = reelState.reel.children[0].label === reelState.stopIndex;
+
     if (reelState.isAtStartPosition && isLabelMatched) {
       reelState.canMove = false;
       reelState.decRate = VELOCITY_DECREASE_RATE;
-  
+
       gsap.to(reelState.reel, {
-        y: targetY + 10,       // 向上移动 10px
+        y: REEL_SET_Y + 10,       // 向上移动 10px
         duration: 0.03,     // 每次移动时长
         yoyo: true,     // 来回运动
         repeat: 2,     // 无限循环
@@ -270,24 +270,24 @@ type Sprites = PIXI.Sprite[]
   }
 
   // run
-  function run(reelState: ReelState, reel: PIXI.Container, deltaTime: number, targetY: number, direction:number) {
+  function run(reelState: ReelState, deltaTime: number) {
     if (reelState.canMove) {
-      moveAndWrap(reelState.reel, SPACE, deltaTime, direction, reelState.velocity);
+      moveAndWrap(reelState.reel, SPACE, deltaTime, reelState.direction, reelState.velocity);
     }
-  
+
     if (reelState.canAcc) {
       acceleration(reelState, MAX_VELOCITY, VELOCITY_INCREASE_RATE);
     }
-  
+
     if (reelState.canDeceleration) {
-      deceleration(reelState, reel, targetY);
+      deceleration(reelState);
     }
-  
+
     if (reelState.canStop) {
-      stopReelWithBounce(reelState, reel.children[0].label, targetY);
+      stopReelWithBounce(reelState);
     }
-  } 
-  
+  }
+
 
   // create and set the action mode of the button
   function setButtonActionMode(buttonTexture: PIXI.Sprite): PIXI.Sprite {
@@ -356,7 +356,7 @@ type Sprites = PIXI.Sprite[]
 
     for (let j = 0; j < REEL_SIZE; j++) {
       const sprite = new PIXI.Sprite(textures.gift)
-      sprite.tint = generateRandomColor();
+      sprite.tint = j * 1500000;
       sprite.label = "" + j;
       sprites.push(sprite);
       console.log((sprite as any).id);
@@ -378,16 +378,14 @@ type Sprites = PIXI.Sprite[]
   const stopButton = createAndRenderButton(setButtonActionMode(stopButtonSprite), AVTIONBUTTON_X + 100, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
 
 
-  const reel1State = new ReelState(SCROLL_DIRECTION_DOWN, reels[0])
-  const reel2State = new ReelState(SCROLL_DIRECTION_UP, reels[1])
-  const reel3State = new ReelState(SCROLL_DIRECTION_DOWN, reels[2])
-
-
   // todo: add states of all reels here
   const reelStates: ReelState[] = [
-    reel1State,
-    reel2State,
-    reel3State
+    new ReelState(SCROLL_DIRECTION_DOWN, reels[0]),
+    new ReelState(SCROLL_DIRECTION_UP, reels[1]),
+    new ReelState(SCROLL_DIRECTION_DOWN, reels[2]),
+    new ReelState(SCROLL_DIRECTION_UP, reels[3]),
+    new ReelState(SCROLL_DIRECTION_DOWN, reels[4]),
+    new ReelState(SCROLL_DIRECTION_UP, reels[5])
   ]
 
   actionButton.on('pointerdown', () => {
@@ -412,9 +410,9 @@ type Sprites = PIXI.Sprite[]
 
   app.ticker.add((time: PIXI.Ticker) => {
 
-    run(reel1State, reels[0], time.deltaTime, REEL_SET_Y, SCROLL_DIRECTION_DOWN);
-    run(reel2State, reels[1], time.deltaTime, REEL_SET_Y, SCROLL_DIRECTION_UP);
-    run(reel3State, reels[2], time.deltaTime, REEL_SET_Y, SCROLL_DIRECTION_DOWN);
+    reelStates.forEach((reel) => {
+      run(reel, time.deltaTime);
+    })
 
   });
 
