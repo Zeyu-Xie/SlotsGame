@@ -1,6 +1,7 @@
 // import { Application, Assets, Sprite } from "pixi.js";
 import * as PIXI from "pixi.js";
 import { gsap } from 'gsap';
+import * as BE from './be.ts';
 
 // define the name of the type 'PIXI.Sprite[]'
 type Sprites = PIXI.Sprite[]
@@ -408,17 +409,29 @@ type Sprites = PIXI.Sprite[]
     });
   });
 
+  
+
+
   app.ticker.add((time: PIXI.Ticker) => {
 
-    reelStates.forEach((reel) => {
-      run(reel, time.deltaTime);
+    reelStates.forEach((reelState) => {
+      reelState.stopIndex = '2'
+      run(reelState, time.deltaTime);
     })
+
+    for (let i = 0; i < reelStates.length; i++) {
+      const reelState = reelStates[i];
+      reelState.stopIndex = ""+i;
+      run(reelState, time.deltaTime);
+    }
 
   });
 
 
 
 })();
+
+BE.temp()
 
 
 /*
