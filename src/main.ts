@@ -50,9 +50,8 @@ type Sprites = PIXI.Sprite[]
   const STOP_SPRITES_INDEX_1 = 2;
 
   const SPACE = 80;
-  const REEL_NUM = 6;
-  const REEL_SIZE = 7;
-  const REEL_SET_X = CENTER_X - REEL_NUM * REEL_GAP / 2;
+  const REEL_SIZE = BE.GetReelSet()[0].length;
+  const REEL_SET_X = CENTER_X - BE.GetReelNum() * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
 
   class ReelState {
@@ -352,7 +351,7 @@ type Sprites = PIXI.Sprite[]
 
   // temp usage of init sprites
   const spritesArray: Sprites[] = []
-  for (let i = 0; i < REEL_NUM; i++) {
+  for (let i = 0; i < BE.GetReelNum(); i++) {
     const sprites: Sprites = []
 
     for (let j = 0; j < REEL_SIZE; j++) {
@@ -360,7 +359,6 @@ type Sprites = PIXI.Sprite[]
       sprite.tint = j * 1500000;
       sprite.label = "" + j;
       sprites.push(sprite);
-      console.log((sprite as any).id);
     }
     spritesArray.push(sprites)
   }
@@ -431,12 +429,4 @@ type Sprites = PIXI.Sprite[]
 
 })();
 
-BE.temp()
-
-
-/*
-  todo:
-    1. extract all the code in ticker into one function called run which only needs one paramemter of type ReelState
-    2. implement states array to manage states for all the reels
-*/
 
