@@ -24,18 +24,18 @@ const PAY_TABLE =
     ]
 
 
-const REEL_1 = [1, 4, 3, 5, 5, 3, 1]
+const REEL_1 = [1, 4, 0, 5, 5, 3, 1]
 const REEL_2 = [2, 2, 5, 4, 2, 5, 3]
-const REEL_3 = [1, 5, 3, 1, 4, 3, 1]
-const REEL_4 = [1, 2, 4, 5, 2, 3, 2]
+const REEL_3 = [1, 5, 0, 1, 4, 3, 1]
+const REEL_4 = [1, 2, 4, 0, 2, 3, 2]
 const REEL_5 = [1, 2, 3, 1, 5, 3, 4]
-const REEL_6 = [5, 2, 3, 4, 2, 5, 1]
+const REEL_6 = [5, 2, 3, 0, 2, 5, 1]
 
 const REEL_SET = [REEL_1, REEL_2, REEL_3, REEL_4, REEL_5, REEL_6];
 
-// /** class of position
-//  * x and y are coordinates
-//  */
+/** class of position
+ * x and y are coordinates
+ */
 class Position {
     x: number;
     y: number;
@@ -46,11 +46,11 @@ class Position {
     }
 }
 
-// /** class of win
-//  * symID: id of win symbols
-//  * positions: coordinates of win symbols
-//  * amount: amount of win
-//  */
+/** class of win
+ * symID: id of win symbols
+ * positions: coordinates of win symbols
+ * amount: amount of win
+ */
 class Win {
     symId: number;
     postions: Position[];
@@ -68,10 +68,12 @@ class Win {
  * wins: if more than one win conbination occurs at one time, it contains all win conbinations
  */
 class SpinRes {
+    reelStopsFirst : number[]
     reelStops: number[][]
     wins: Win[]
 
-    constructor(reelStops: number[][], wins: Win[]) {
+    constructor(reelStopsFirst : number[], reelStops: number[][], wins: Win[]) {
+        this.reelStopsFirst = reelStopsFirst;
         this.reelStops = reelStops;
         this.wins = wins;
     }
@@ -93,28 +95,46 @@ export function GetReelNum(): number {
 
 // get spin result
 function getRandomInt(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(Math.random() * (max - min)) + min;
 }
 
 export function GetSpinResult(): SpinRes {
+    const reelStopsFirst= [];
     const reelStops: number[][] = [];
 
     for (let i = 0; i < REEL_NUM; i++) {
 
         const reel = REEL_SET[i];
         const reelLength = reel.length;
-        const start = getRandomInt(0, reel.length);
+        const stopIndex = getRandomInt(0, reel.length);      
+             
         const symbols: number[] = [];
+        reelStopsFirst.push(stopIndex);
 
         for (let j = 1; j < ROW_NUM + 1; j++) {
-            const index = (start + j) % reelLength;
+            const index = (stopIndex + j) % reelLength;
             symbols.push(reel[index]);
         }
         reelStops.push(symbols);
     }
 
-    return new SpinRes(reelStops, winResults(reelStops));
+    return new SpinRes(reelStopsFirst, reelStops, winResults(reelStops));
 }
+
+// export function GetSpinResult(): SpinRes {
+//     const reelStops: number[] = [];
+
+//     for (let i = 0; i < REEL_NUM; i++) {
+
+//         const reel = REEL_SET[i];
+
+//         const start = getRandomInt(0, reel.length);
+
+//         const symbol = reel[start];
+//         reelStops.push(symbol);
+//     }
+//     return new SpinRes(reelStops, winResults(reelStops));
+// }
 
 function winResults(reelStops: number[][]): Win[] {
     let wins: Win[] = []
@@ -138,6 +158,7 @@ function winResults(reelStops: number[][]): Win[] {
     }
     return wins
 }
+
 
 
 // ---- test -----

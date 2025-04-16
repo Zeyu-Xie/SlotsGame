@@ -54,6 +54,8 @@ type Sprites = PIXI.Sprite[]
   const REEL_SET_X = CENTER_X - BE.GetReelNum() * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
 
+
+
   class ReelState {
     canMove: boolean;
     velocity: number;
@@ -286,6 +288,8 @@ type Sprites = PIXI.Sprite[]
     if (reelState.canStop) {
       stopReelWithBounce(reelState);
     }
+
+    
   }
 
 
@@ -321,47 +325,38 @@ type Sprites = PIXI.Sprite[]
   const actionButtonSprite = new PIXI.Sprite(textures.bunny);
   const stopButtonSprite = new PIXI.Sprite(textures.bunny);
 
-  /* create some sprites 
-   * put all sprites into spritesArray */
-  // todo: apply this later
-  // const spritesArray: Sprites[] = [
-  //   [new PIXI.Sprite(textures.club),
-  //   new PIXI.Sprite(textures.diamond),
-  //   new PIXI.Sprite(textures.heart),
-  //   new PIXI.Sprite(textures.spade),
-  //   new PIXI.Sprite(textures.gift),
-  //   new PIXI.Sprite(textures.diamond),
-  //   new PIXI.Sprite(textures.gift)],
-  //   [new PIXI.Sprite(textures.diamond),
-  //   new PIXI.Sprite(textures.heart),
-  //   new PIXI.Sprite(textures.spade),
-  //   new PIXI.Sprite(textures.gift),
-  //   new PIXI.Sprite(textures.club),
-  //   new PIXI.Sprite(textures.diamond),
-  //   new PIXI.Sprite(textures.gift)],
-  //   [new PIXI.Sprite(textures.heart),
-  //   new PIXI.Sprite(textures.diamond),
-  //   new PIXI.Sprite(textures.heart),
-  //   new PIXI.Sprite(textures.spade),
-  //   new PIXI.Sprite(textures.gift),
-  //   new PIXI.Sprite(textures.gift),
-  //   new PIXI.Sprite(textures.club)]
-  // ];
+  // create sprite map
+  const SPRITE_MAP: { [key: number]: PIXI.Texture } = {
+    0: PIXI.Assets.get("club"),
+    1: PIXI.Assets.get("gift"),
+    2: PIXI.Assets.get("diamond"),
+    3: PIXI.Assets.get("heart"),
+    4: PIXI.Assets.get("spade"),
+    5: PIXI.Assets.get("bunny")
+  }
 
 
   // temp usage of init sprites
   const spritesArray: Sprites[] = []
+  // loop of every reel
+  
   for (let i = 0; i < BE.GetReelNum(); i++) {
     const sprites: Sprites = []
-
+    //loop of every sprites in one reel
     for (let j = 0; j < REEL_SIZE; j++) {
-      const sprite = new PIXI.Sprite(textures.gift)
-      sprite.tint = j * 1500000;
-      sprite.label = "" + j;
+      let spriteIndex = BE.GetReelSet()[i][j];
+      let index = j;
+      let texture = SPRITE_MAP[spriteIndex];
+      let sprite = new PIXI.Sprite(texture);
+      sprite.label = ''+index;
       sprites.push(sprite);
+      console.log(sprite.label);
     }
+    // console.log("lll");
     spritesArray.push(sprites)
   }
+
+  
 
   const reels = createReels(spritesArray, SCALE, SPACE);
   const reelSet = createReelSet(reels, REEL_SET_X, REEL_SET_Y, REEL_GAP);
@@ -402,26 +397,27 @@ type Sprites = PIXI.Sprite[]
 
   stopButton.on('pointerdown', () => {
     // reel1State.canDeceleration = true;
-    reelStates.forEach((reel) => {
-      reel.canDeceleration = true;
-    });
+
+    const spinResult = BE.GetSpinResult();
+    const stopIndex = spinResult.reelStopsFirst
+
+    for (let reelIndex = 0; reelIndex < BE.GetReelNum(); reelIndex++) {
+      const reelState = reelStates[reelIndex];
+      reelState.canDeceleration = true;
+      reelState.stopIndex = ''+stopIndex[reelIndex];
+    }
+
   });
 
-  
 
 
-  app.ticker.add((time: PIXI.Ticker) => {
-
-    reelStates.forEach((reelState) => {
-      reelState.stopIndex = '2'
-      run(reelState, time.deltaTime);
-    })
+  app.ticker.add((time: PIXI.Ticker) => {      
 
     for (let i = 0; i < reelStates.length; i++) {
       const reelState = reelStates[i];
-      reelState.stopIndex = ""+i;
       run(reelState, time.deltaTime);
     }
+    
 
   });
 
