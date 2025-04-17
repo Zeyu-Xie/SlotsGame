@@ -1,7 +1,9 @@
-// import { Application, Assets, Sprite } from "pixi.js";
+
 import * as PIXI from "pixi.js";
 import { gsap } from 'gsap';
 import * as BE from './be.ts';
+import { ColorMatrixFilter } from '@pixi/filter-color-matrix';
+import { GlowFilter } from '@pixi/filter-glow';
 
 // define the name of the type 'PIXI.Sprite[]'
 type Sprites = PIXI.Sprite[]
@@ -19,7 +21,7 @@ type Sprites = PIXI.Sprite[]
   const REEL_GAP = 100;
   const CENTER_X = app.screen.width / 2;
   const CENTER_Y = app.screen.height / 2;
-  const SCALE = 0.8;
+  const SCALE = 0.4;
 
   const MASK_COLOR = 0x000000;
   const MASK_ALPHA = 0.5;
@@ -54,7 +56,15 @@ type Sprites = PIXI.Sprite[]
   const REEL_SET_X = CENTER_X - BE.GetReelNum() * REEL_GAP / 2;
   const REEL_SET_Y = CENTER_Y - REEL_SIZE * SPACE / 2;
 
-
+  // const GLOW_FILTER = new GlowFilter({
+  //   distance: 15, // 发光的扩散距离
+  //   outerStrength: 4,  // 外发光的强度
+  //   innerStrength: 1,
+  //   color: 0xFFD700,
+  //   quality: 0.5  // 质量，值越高效果越好
+  // });
+  // GLOW_FILTER.padding = 10;
+  // GLOW_FILTER.knockout = false;
 
   class ReelState {
     canMove: boolean;
@@ -66,6 +76,7 @@ type Sprites = PIXI.Sprite[]
     stopIndex: string;
     reel: PIXI.Container;
     decRate: number
+    canShowWin: boolean;
 
     constructor(direction: number, reel: PIXI.Container) {
       this.canMove = false;
@@ -77,6 +88,7 @@ type Sprites = PIXI.Sprite[]
       this.stopIndex = '0';
       this.reel = reel;
       this.decRate = VELOCITY_DECREASE_RATE
+      this.canShowWin = false;
     }
 
     get isStopped(): boolean {
@@ -244,7 +256,7 @@ type Sprites = PIXI.Sprite[]
       if (reelState.decRate > 0.02) {
         reelState.decRate -= 0.0005;
       }
-      console.log(reelState.decRate);
+      // console.log(reelState.decRate);
     }
 
     if (reelState.velocity < MIN_VELOCITY) {
@@ -260,6 +272,8 @@ type Sprites = PIXI.Sprite[]
     if (reelState.isAtStartPosition && isLabelMatched) {
       reelState.canMove = false;
       reelState.decRate = VELOCITY_DECREASE_RATE;
+      reelState.canShowWin = true;
+      reelState.canStop = false;
 
       gsap.to(reelState.reel, {
         y: REEL_SET_Y + 10,       // 向上移动 10px
@@ -269,6 +283,23 @@ type Sprites = PIXI.Sprite[]
         ease: "sine.inOut"  // 平滑缓动
       });
     }
+  }
+
+  // hightlight winning symbols
+  function highlightWinningSymbols(winResults: BE.Win[]) {
+    winResults.forEach(win => {
+      win.positions.forEach(position => {
+        const highlightSymbol = reelStates[position.x].reel.children[position.y];
+        highlightSymbol.tint = 0x000000;
+      }
+      )
+    }
+    )
+  }
+
+  // 判断所有的 reel 是否都停止
+  function allReelsCanShowWin(): boolean {
+    return reelStates.every(reelState => reelState.canShowWin);
   }
 
   // run
@@ -289,7 +320,13 @@ type Sprites = PIXI.Sprite[]
       stopReelWithBounce(reelState);
     }
 
-    
+    if (allReelsCanShowWin()) {
+      console.log("sfaegagavs");
+      
+      highlightWinningSymbols(wins);
+      reelState.canShowWin = false;
+    }
+
   }
 
 
@@ -310,6 +347,24 @@ type Sprites = PIXI.Sprite[]
     return buttonSprite;
   }
 
+  // create amount text
+  function createAmountText(winAmount: number) {
+    const text = new PIXI.Text({
+      text: `Total Amount: ${totalAmount}`,
+      style: {
+        fontFamily: 'Arial',
+        fontSize: 24,
+        fill: 0xff1010,
+        align: 'center',
+      }
+    });
+
+    text.x = 100;
+    text.y = 50;
+
+    app.stage.addChild(text);
+  }
+
 
   //load the assets
   PIXI.Assets.addBundle("assets", {
@@ -318,28 +373,40 @@ type Sprites = PIXI.Sprite[]
     club: "/assets/club.png",
     diamond: "/assets/diamond.png",
     heart: "/assets/heart.png",
-    spade: "/assets/spade.png"
+    spade: "/assets/spade.png",
+    light1: 'https://pixijs.com/assets/light_rotate_1.png',
+    symbol1: "/assets/1.png",
+    symbol2: "/assets/2.png",
+    symbol3: "/assets/3.png",
+    symbol4: "/assets/4.png",
+    symbol5: "/assets/5.png",
+    symbol6: "/assets/6.png",
   });
   const textures = await PIXI.Assets.loadBundle("assets");
 
   const actionButtonSprite = new PIXI.Sprite(textures.bunny);
   const stopButtonSprite = new PIXI.Sprite(textures.bunny);
+  const light1Sprite = new PIXI.Sprite(textures.light1)
 
   // create sprite map
   const SPRITE_MAP: { [key: number]: PIXI.Texture } = {
-    0: PIXI.Assets.get("club"),
-    1: PIXI.Assets.get("gift"),
-    2: PIXI.Assets.get("diamond"),
-    3: PIXI.Assets.get("heart"),
-    4: PIXI.Assets.get("spade"),
-    5: PIXI.Assets.get("bunny")
+    0: PIXI.Assets.get("symbol1"),
+    1: PIXI.Assets.get("symbol2"),
+    2: PIXI.Assets.get("symbol3"),
+    3: PIXI.Assets.get("symbol4"),
+    4: PIXI.Assets.get("symbol5"),
+    5: PIXI.Assets.get("symbol6")
   }
 
+  // const temp = new PIXI.Sprite(SPRITE_MAP[3])
+  // app.stage.addChild(temp)
+  // temp.y = 100
+  // temp.filters = [GLOW_FILTER as any]
 
   // temp usage of init sprites
   const spritesArray: Sprites[] = []
+
   // loop of every reel
-  
   for (let i = 0; i < BE.GetReelNum(); i++) {
     const sprites: Sprites = []
     //loop of every sprites in one reel
@@ -348,15 +415,16 @@ type Sprites = PIXI.Sprite[]
       let index = j;
       let texture = SPRITE_MAP[spriteIndex];
       let sprite = new PIXI.Sprite(texture);
-      sprite.label = ''+index;
+      sprite.label = '' + index;
       sprites.push(sprite);
-      console.log(sprite.label);
+      // console.log(sprite.label);
     }
-    // console.log("lll");
     spritesArray.push(sprites)
   }
+  console.log(spritesArray);
 
-  
+
+
 
   const reels = createReels(spritesArray, SCALE, SPACE);
   const reelSet = createReelSet(reels, REEL_SET_X, REEL_SET_Y, REEL_GAP);
@@ -381,45 +449,122 @@ type Sprites = PIXI.Sprite[]
     new ReelState(SCROLL_DIRECTION_DOWN, reels[4]),
     new ReelState(SCROLL_DIRECTION_UP, reels[5])
   ]
+  let wins: BE.Win[] = []  // win的类的数组(id,坐标和amount)
 
   actionButton.on('pointerdown', () => {
-    // reel1State.canMove = true;
-    // reel1State.canStop = false;
-    // reel1State.canDeceleration = false;
-    // reel1State.velocity = 0;
+    clearHighlights();
+
     reelStates.forEach((reel) => {
       reel.canMove = true;
       reel.canStop = false;
       reel.canDeceleration = false;
       reel.velocity = 0;
+      reel.canShowWin = false;
     });
+
   });
 
   stopButton.on('pointerdown', () => {
-    // reel1State.canDeceleration = true;
-
+    // stop at assigned reelIndex
     const spinResult = BE.GetSpinResult();
     const stopIndex = spinResult.reelStopsFirst
 
     for (let reelIndex = 0; reelIndex < BE.GetReelNum(); reelIndex++) {
       const reelState = reelStates[reelIndex];
       reelState.canDeceleration = true;
-      reelState.stopIndex = ''+stopIndex[reelIndex];
+      reelState.stopIndex = '' + stopIndex[reelIndex];
     }
 
+    wins = spinResult.wins
+    console.log(spinResult);
   });
 
-
-
-  app.ticker.add((time: PIXI.Ticker) => {      
+  app.ticker.add((time: PIXI.Ticker) => {
 
     for (let i = 0; i < reelStates.length; i++) {
       const reelState = reelStates[i];
       run(reelState, time.deltaTime);
     }
-    
+
 
   });
+
+
+  // highlight the win symbols
+  let totalAmount = 0;
+
+  // winResults.forEach(win => {
+  //   totalAmount += win.amount;
+
+  //   console.log(`Win for symbol ${win.symId}: Amount = ${win.amount}`);
+
+  //   // 遍历 Win 对象中的 positions 数组，获取每个坐标并高亮
+  //   win.positions.forEach(position => {
+  //     console.log(`Reel: ${position.x}, Row: ${position.y}`);
+  //     highightWinningSymbol(position.x, position.y, light1Sprite);
+  //   });
+  // });
+  // createAmountText(totalAmount);
+
+
+
+
+
+
+
+
+
+
+
+
+  // //高亮函数
+  function highightWinningSymbol(reelIdx: number, rowIdx: number) {
+    // const highlightSymbol = reelStates[reelIdx].reel.children[rowIdx]
+    const highlightSymbol = reelStates[0].reel.children[0]
+    highlightSymbol.tint = 0x000000;
+  }
+
+  // clear hightlight
+  function clearHighlights() {
+    spritesArray.forEach(reel => {
+      reel.forEach(sprite => {
+        sprite.tint = 0xFFFFFF; // 重置颜色为默认（无高亮）白色
+      });
+    });
+  }
+
+
+  // function highightWinningSymbol(reelNum: number, rowNum: number, sprite: PIXI.Sprite) {
+  //   const highlightSymbol = spritesArray[reelNum][rowNum]
+  //   const light1 = sprite;
+  //   const container = new PIXI.Container();
+
+  //   container.position.set(highlightSymbol.x, highlightSymbol.y);
+
+  //   light1.anchor.set(0.5);        // 居中旋转
+  //   light1.position.set(0, 0);     // 放在容器中心
+  //   light1.scale.set(0.5);         // 根据需要调整大小
+
+  //   container.addChild(light1);
+
+  //   const glowFilter = new GlowFilter({
+  //     distance: 1,
+  //     outerStrength: 3,
+  //     innerStrength: 1,
+  //     color: 0xFFD700, // 金色
+  //     quality: 1
+  //   });
+
+  //   container.filters = [glowFilter as unknown as PIXI.Filter];
+  //   highlightSymbol.parent.addChild(container);
+
+  //   app.ticker.add(() => {
+  //     light1.rotation += 0.1;
+  //   });
+  // }
+
+
+
 
 
 

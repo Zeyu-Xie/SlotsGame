@@ -9,18 +9,18 @@ function temp(): number {
 temp()
 
 
-const ROW_NUM = 5;
+const ROW_NUM = 4;
 const REEL_NUM = 6;
 const SYMBOLS = [0, 1, 2, 3, 4, 5]
 
 const PAY_TABLE =
     [
-        [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-        [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-        [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-        [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-        [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-        [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
     ]
 
 
@@ -51,14 +51,14 @@ class Position {
  * positions: coordinates of win symbols
  * amount: amount of win
  */
-class Win {
+export class Win {
     symId: number;
-    postions: Position[];
+    positions: Position[];
     amount: number;
 
     constructor(symId: number, positions: Position[], amount: number) {
         this.symId = symId;
-        this.postions = positions;
+        this.positions = positions;
         this.amount = amount;
     }
 }
@@ -68,11 +68,11 @@ class Win {
  * wins: if more than one win conbination occurs at one time, it contains all win conbinations
  */
 class SpinRes {
-    reelStopsFirst : number[]
+    reelStopsFirst: number[]
     reelStops: number[][]
     wins: Win[]
 
-    constructor(reelStopsFirst : number[], reelStops: number[][], wins: Win[]) {
+    constructor(reelStopsFirst: number[], reelStops: number[][], wins: Win[]) {
         this.reelStopsFirst = reelStopsFirst;
         this.reelStops = reelStops;
         this.wins = wins;
@@ -99,57 +99,50 @@ function getRandomInt(min: number, max: number): number {
 }
 
 export function GetSpinResult(): SpinRes {
-    const reelStopsFirst= [];
+    const reelStopsFirst = [];
     const reelStops: number[][] = [];
-
+    // every reel
     for (let i = 0; i < REEL_NUM; i++) {
 
         const reel = REEL_SET[i];
         const reelLength = reel.length;
-        const stopIndex = getRandomInt(0, reel.length);      
-             
-        const symbols: number[] = [];
+        const stopIndex = getRandomInt(0, reel.length);
+        // random index of every symbol of the first row
         reelStopsFirst.push(stopIndex);
 
-        for (let j = 1; j < ROW_NUM + 1; j++) {
+        const symbols: number[] = [];
+        for (let j = 0; j < ROW_NUM; j++) {
             const index = (stopIndex + j) % reelLength;
             symbols.push(reel[index]);
         }
         reelStops.push(symbols);
     }
+    console.log('reel1 '+ REEL_SET[0]);
+    
+    console.log('reelstopFirst '+ reelStopsFirst);
 
     return new SpinRes(reelStopsFirst, reelStops, winResults(reelStops));
 }
 
-// export function GetSpinResult(): SpinRes {
-//     const reelStops: number[] = [];
-
-//     for (let i = 0; i < REEL_NUM; i++) {
-
-//         const reel = REEL_SET[i];
-
-//         const start = getRandomInt(0, reel.length);
-
-//         const symbol = reel[start];
-//         reelStops.push(symbol);
-//     }
-//     return new SpinRes(reelStops, winResults(reelStops));
-// }
 
 function winResults(reelStops: number[][]): Win[] {
     let wins: Win[] = []
-
+    // every symbol type 
     for (let symbolId = 0; symbolId < SYMBOLS.length; symbolId++) {
         let symbolNum = 0;
         let win = new Win(symbolId, [], 0)
+        
+        // every reel
         for (let reelId = 0; reelId < REEL_NUM; reelId++) {
             const reelStop = reelStops[reelId]
+
+            // every symbol of one reel
             for (let symbolY = 0; symbolY < ROW_NUM; symbolY++) {
-                const symbol = reelStop[symbolY]
+                const symbolIndex = reelStop[symbolY]
                 const symbolPosition = new Position(reelId, symbolY)
-                if (symbol === symbolId) {
+                if (symbolIndex === symbolId) {
                     symbolNum++
-                    win.postions.push(symbolPosition)
+                    win.positions.push(symbolPosition)
                 }
             }
         }
