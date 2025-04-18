@@ -363,9 +363,9 @@ type Sprites = PIXI.Sprite[]
         // higlight symbols shake action
         gsap.to(highlightSymbol, {
           y: highlightSymbol.y + 10,       // 向上移动 10px
-          duration: 0.03,     // 每次移动时长
+          duration: 0.2,     // 每次移动时长
           yoyo: true,     // 来回运动
-          repeat: 2,     // 无限循环
+          repeat: -1,     // 无限循环
           ease: "sine.inOut"  // 平滑缓动
         });
       });
@@ -377,8 +377,11 @@ type Sprites = PIXI.Sprite[]
     reelStates.forEach(reelState => {
       reelState.reel.children.forEach(symbol => {
         symbol.tint = 0xFFFFFF;
+        gsap.killTweensOf(symbol);
+        symbol.y -= 10; 
       });
     });
+     
   }
 
   // get total win amount
