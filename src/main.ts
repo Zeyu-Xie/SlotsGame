@@ -51,8 +51,8 @@ type Sprites = PIXI.Sprite[]
 
   const SPACE = 80;
   const REEL_SIZE = BE.GetReelSet()[0].length;
-  let REEL_SET_WIDTH =() => BE.GetReelNum() * REEL_GAP
-  let REEL_SET_HIGHT =() => BE.GetRowNum() * SPACE
+  let REEL_SET_WIDTH = () => BE.GetReelNum() * REEL_GAP
+  let REEL_SET_HIGHT = () => BE.GetRowNum() * SPACE
   let REEL_SET_X = () => CENTER_X - REEL_SET_WIDTH() / 2;
   let REEL_SET_Y = () => CENTER_Y - REEL_SET_HIGHT() / 2;
   const MASK_TOP_X = () => 0;
@@ -322,6 +322,21 @@ type Sprites = PIXI.Sprite[]
     }
   }
 
+  // the action logic of stop  
+  function triggerStop() {
+    const spinResult = BE.GetSpinResult();
+    const stopIndex = spinResult.reelStopsFirst;
+
+    for (let reelIndex = 0; reelIndex < reelStates.length; reelIndex++) {
+      const reelState = reelStates[reelIndex];
+      reelState.canDeceleration = true;
+      reelState.stopIndex = '' + stopIndex[reelIndex];
+    }
+
+    wins = spinResult.wins;
+  }
+
+
   // stop
   function stopReelWithBounce(reelState: ReelState) {
     const isLabelMatched = reelState.reel.children[0].label === reelState.stopIndex;
@@ -467,7 +482,6 @@ type Sprites = PIXI.Sprite[]
   const textures = await PIXI.Assets.loadBundle("assets");
 
   const actionButtonSprite = new PIXI.Sprite(textures.bunny);
-  const stopButtonSprite = new PIXI.Sprite(textures.bunny);
   const addReelAndRowSprite = new PIXI.Sprite(textures.heart);
   const reduceReelAndRowSprite = new PIXI.Sprite(textures.club);
 
@@ -483,16 +497,10 @@ type Sprites = PIXI.Sprite[]
     5: PIXI.Assets.get("symbol6")
   }
 
-  // create top and bottom masks
-  // createMask(MASK_TOP_X(), MASK_TOP_Y(), MASK_TOP_WIDTH(), MASK_TOP_HEIGHT(), MASK_COLOR, MASK_ALPHA)
-  // createMask(MASK_BOTTOM_X(), MASK_BOTTOM_Y(), MASK_BOTTOM_WIDTH(), MASK_BOTTOM_HEIGHT(), MASK_COLOR, MASK_ALPHA)
-
   // create and render button
   const actionButton = createAndRenderButton(setButtonActionMode(actionButtonSprite), ACTIONBUTTON_X, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
-  const stopButton = createAndRenderButton(setButtonActionMode(stopButtonSprite), ACTIONBUTTON_X + 100, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
   const addReelAndRowButton = createAndRenderButton(setButtonActionMode(addReelAndRowSprite), ADD_REEL_ROW_BUTTON_X, ADD_REEL_ROW_BUTTON_Y, ADD_REEL_ROW_BUTTON_SCALE);
   const reduceReelAndRowButton = createAndRenderButton(setButtonActionMode(reduceReelAndRowSprite), REDUCE_REEL_ROW_BUTTON_X, REDUCE_REEL_ROW_BUTTON_Y, REDUCE_REEL_ROW_BUTTON_SCALE);
-
 
   // all states and wins
   let reelStates: ReelState[];
@@ -517,6 +525,7 @@ type Sprites = PIXI.Sprite[]
     loadReels(BE.GetReelNum(), REEL_SIZE)
   });
 
+
   actionButton.on('pointerdown', () => {
     clearAllHighlights();
     reelStates.forEach((reel) => {
@@ -526,22 +535,13 @@ type Sprites = PIXI.Sprite[]
       reel.velocity = 0;
       reel.canShowWin = false;
     });
+
+    setTimeout(() => {
+      triggerStop();
+    }, 800);
+
   });
 
-  stopButton.on('pointerdown', () => {
-    // stop at assigned reelIndex
-    const spinResult = BE.GetSpinResult();
-    const stopIndex = spinResult.reelStopsFirst
-
-    for (let reelIndex = 0; reelIndex < reelStates.length; reelIndex++) {
-      const reelState = reelStates[reelIndex];
-      reelState.canDeceleration = true;
-      reelState.stopIndex = '' + stopIndex[reelIndex];
-    }
-
-    wins = spinResult.wins
-    // console.log(spinResult);
-  });
 
   app.ticker.add((time: PIXI.Ticker) => {
 
