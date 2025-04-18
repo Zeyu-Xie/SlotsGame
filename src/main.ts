@@ -361,10 +361,17 @@ type Sprites = PIXI.Sprite[]
       win.positions.forEach(position => {
         const highlightSymbol = reelStates[position.x].reel.children[position.y];
         highlightSymbol.tint = 0x000000;
-      }
-      )
-    }
-    )
+
+        // higlight symbols shake action
+        gsap.to(highlightSymbol, {
+          y: highlightSymbol.y + 10,       // 向上移动 10px
+          duration: 0.03,     // 每次移动时长
+          yoyo: true,     // 来回运动
+          repeat: 2,     // 无限循环
+          ease: "sine.inOut"  // 平滑缓动
+        });
+      });
+    });
   }
 
   function clearAllHighlights() {
@@ -399,26 +406,11 @@ type Sprites = PIXI.Sprite[]
     }
 
     if (allReelsCanShowWin()) {
-
       highlightWinningSymbols(wins);
       reelState.canShowWin = false;
     }
 
-    // setTransparancyForOutsideSymbols(reelState)
-
   }
-
-  // // set transparancy for outside symbols
-  // function setTransparancyForOutsideSymbols(reelState: ReelState) {
-
-  //   reelState.reel.children.forEach(child => {
-  //     if (child.y < VISIBLE_TOP() || child.y > VISIBLE_BOTTOM()) {
-  //       child.alpha = 1;
-  //     } else { child.alpha = 0 }
-  //   })
-
-  // }
-
 
   // create and set the action mode of the button
   function setButtonActionMode(buttonTexture: PIXI.Sprite): PIXI.Sprite {
@@ -490,14 +482,6 @@ type Sprites = PIXI.Sprite[]
     4: PIXI.Assets.get("symbol5"),
     5: PIXI.Assets.get("symbol6")
   }
-
-
-  // const spritesArray = createReelsSprites(BE.GetReelNum(), REEL_SIZE, SPRITE_MAP);
-
-  // const reels = createReels(spritesArray, SCALE, SPACE);
-  // const reelSet = createReelSet(reels, REEL_SET_X(), REEL_SET_Y(), REEL_GAP);
-  // app.stage.addChild(reelSet);
-
 
   // create top and bottom masks
   // createMask(MASK_TOP_X(), MASK_TOP_Y(), MASK_TOP_WIDTH(), MASK_TOP_HEIGHT(), MASK_COLOR, MASK_ALPHA)
