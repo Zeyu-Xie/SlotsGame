@@ -118,23 +118,6 @@ type Sprites = PIXI.Sprite[]
 
   }
 
-  // generate random sprits colors
-  function generateRandomColor(): number {
-    // 生成一个 0 到 16777215 之间的随机整数（即 0x000000 到 0xFFFFFF）
-    const randomColor = Math.floor(Math.random() * 16777215);
-    return randomColor;
-  }
-
-  // create a mask
-  function createMask(maskX: number, maskY: number, maskWidth: number, maskHeight: number, maskColor: number, maskAlpha: number): PIXI.Graphics {
-    const mask = new PIXI.Graphics();
-    mask.label = 'mask';
-    mask.rect(maskX, maskY, maskWidth, maskHeight);
-    mask.fill({ color: maskColor, alpha: maskAlpha });
-    app.stage.addChild(mask);
-    return mask;
-  }
-
   // create sprites array for reel set 
   function createReelsSprites(reelNum: number, reelSize: number, spriteMap: { [key: number]: PIXI.Texture }): Sprites[] {
     const spritesArray: Sprites[] = [];
@@ -389,11 +372,51 @@ type Sprites = PIXI.Sprite[]
     });
   }
 
+  // clear all symbols' highlights
   function clearAllHighlights() {
     reelStates.forEach(reelState => {
       reelState.reel.children.forEach(symbol => {
         symbol.tint = 0xFFFFFF;
       });
+    });
+  }
+
+  // get total win amount
+  function getTotalWinAmount(winResults: BE.Win[]): number {
+    let totalAmount = 0;
+
+    winResults.forEach(win => {
+      totalAmount += win.amount;
+      console.log(`Win for symbol ${win.symId}: Amount = ${win.amount}`);
+    });
+
+    return totalAmount;
+  }
+
+  // create amount text
+  function createAmountText(showText: string) {
+    const text = new PIXI.Text({
+      text: showText,
+      style: {
+        fontFamily: 'Arial',
+        fontSize: 24,
+        fill: 0xff1010,
+        align: 'center',
+      }
+    });
+    text.label = "winAmount";
+    text.x = (app.screen.width - text.width) / 2;
+    text.y = REEL_SET_Y() - 100;
+    app.stage.addChild(text);
+  }
+
+  // clear amount text
+  function clearTextByLabel(label: string) {
+    app.stage.children.forEach(child => {
+      if (child.label === label) {
+        app.stage.removeChild(child);
+        child.destroy();
+      }
     });
   }
 
@@ -422,6 +445,9 @@ type Sprites = PIXI.Sprite[]
 
     if (allReelsCanShowWin()) {
       highlightWinningSymbols(wins);
+      const totalWinAmount = getTotalWinAmount(wins);
+      console.log(`Total Win Amount: ${totalWinAmount}`);
+      createAmountText(`Total Win Amount: ${totalWinAmount}`)
       reelState.canShowWin = false;
     }
 
@@ -444,23 +470,6 @@ type Sprites = PIXI.Sprite[]
     return buttonSprite;
   }
 
-  // create amount text
-  function createAmountText(winAmount: number) {
-    const text = new PIXI.Text({
-      text: `Total Amount: ${totalAmount}`,
-      style: {
-        fontFamily: 'Arial',
-        fontSize: 24,
-        fill: 0xff1010,
-        align: 'center',
-      }
-    });
-
-    text.x = 100;
-    text.y = 50;
-
-    app.stage.addChild(text);
-  }
 
 
   //load the assets
@@ -511,7 +520,7 @@ type Sprites = PIXI.Sprite[]
 
   // add reel and row button
   addReelAndRowButton.on('pointerdown', () => {
-    removeReelSetByLabel()
+    removeReelSetByLabel();
     BE.SetReelNum(BE.GetReelNum() + 1)
     BE.SetRowNum(BE.GetRowNum() + 1)
     loadReels(BE.GetReelNum(), REEL_SIZE)
@@ -525,9 +534,10 @@ type Sprites = PIXI.Sprite[]
     loadReels(BE.GetReelNum(), REEL_SIZE)
   });
 
-
+  // start button
   actionButton.on('pointerdown', () => {
     clearAllHighlights();
+    clearTextByLabel("winAmount");
     reelStates.forEach((reel) => {
       reel.canMove = true;
       reel.canStop = false;
@@ -550,30 +560,7 @@ type Sprites = PIXI.Sprite[]
       run(reelState, time.deltaTime);
     }
 
-
   });
-
-
-  // highlight the win symbols
-  let totalAmount = 0;
-
-  // winResults.forEach(win => {
-  //   totalAmount += win.amount;
-
-  //   console.log(`Win for symbol ${win.symId}: Amount = ${win.amount}`);
-
-  //   // 遍历 Win 对象中的 positions 数组，获取每个坐标并高亮
-  //   win.positions.forEach(position => {
-  //     console.log(`Reel: ${position.x}, Row: ${position.y}`);
-  //     highightWinningSymbol(position.x, position.y, light1Sprite);
-  //   });
-  // });
-  // createAmountText(totalAmount);
-
-
-
-
-
 
 
 
