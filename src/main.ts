@@ -361,7 +361,6 @@ type Sprites = PIXI.Sprite[]
         glowAnimation(highlightSymbol);
 
       });
-
     });
   }
 
@@ -372,6 +371,7 @@ type Sprites = PIXI.Sprite[]
         symbol.tint = 0xFFFFFF;
         gsap.killTweensOf(symbol);
         symbol.y -= 10;
+        symbol.filters = [];
       });
     });
 
