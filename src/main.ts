@@ -3,7 +3,7 @@ import * as PIXI from "pixi.js";
 import { gsap } from 'gsap';
 import * as BE from './be.ts';
 import { ColorMatrixFilter } from '@pixi/filter-color-matrix';
-import { GlowFilter } from '@pixi/filter-glow';
+import { GlowFilter } from 'pixi-filters';
 
 // define the name of the type 'PIXI.Sprite[]'
 type Sprites = PIXI.Sprite[]
@@ -64,6 +64,8 @@ type Sprites = PIXI.Sprite[]
   const MASK_BOTTOM_Y = () => MASK_TOP_HEIGHT() + BE.GetRowNum() * SPACE + 5;
   const MASK_BOTTOM_WIDTH = () => MASK_TOP_WIDTH();
   const MASK_BOTTOM_HEIGHT = () => MASK_TOP_HEIGHT();
+
+
 
   // let VISIBLE_TOP = () => REEL_SET_Y() + 5;
   // let VISIBLE_BOTTOM = () => VISIBLE_TOP() + BE.GetRowNum() * SPACE + 5;
@@ -207,7 +209,7 @@ type Sprites = PIXI.Sprite[]
 
   // load all reels
   // reelNum: number of reels on play area
-  function loadReels(reelNum: number, rowSize: number) {
+  function loadReels(reelNum: number) {
     const spritesArray = createReelsSprites(reelNum, REEL_SIZE, SPRITE_MAP);
     const reels = createReels(spritesArray, SCALE, SPACE);
     const reelSet = createReelSet(reels, REEL_SET_X(), REEL_SET_Y() + 10, REEL_GAP);
@@ -217,6 +219,7 @@ type Sprites = PIXI.Sprite[]
     app.stage.addChild(reelSet);
     reelStates = createReelStates(reels);
     wins = [];
+    bounce(reelSet, 2);
   }
 
   // remove all the children from the container
@@ -353,22 +356,47 @@ type Sprites = PIXI.Sprite[]
     return reelStates;
   }
 
+  // bounce action
+  function bounce(container: PIXI.Container, num:number) {
+    gsap.to(container, {
+      y: container.y + 10,       // 向上移动 10px
+      duration: 0.2,     // 每次移动时长
+      yoyo: true,     // 来回运动
+      repeat: num,     // 无限循环
+      ease: "sine.inOut"  // 平滑缓动
+    });
+  }
+
+  // glow action
+  function glowAnimation(sprite: PIXI.ContainerChild) {
+    const glow = new GlowFilter({
+      color: 0xFFFFFF,         // 发光颜色：bai色
+      distance: 20,            // 发光范围距离
+      outerStrength: 0,        // 初始外发光强度（从0开始方便动画）
+      innerStrength: 0,
+      quality: 6
+    });
+    sprite.filters = [glow];
+    gsap.to(glow, {
+      duration: 1,          // 动画时长0.5秒
+      outerStrength: 4,       // 将外发光强度从0提高到4
+      ease: "easeInOut",
+      yoyo: true,             // 动画完毕后反转
+      repeat: -1              // 无限循环
+    });
+  }
+
   // hightlight winning symbols
   function highlightWinningSymbols(winResults: BE.Win[]) {
     winResults.forEach(win => {
       win.positions.forEach(position => {
         const highlightSymbol = reelStates[position.x].reel.children[position.y];
-        highlightSymbol.tint = 0x000000;
 
-        // higlight symbols shake action
-        gsap.to(highlightSymbol, {
-          y: highlightSymbol.y + 10,       // 向上移动 10px
-          duration: 0.2,     // 每次移动时长
-          yoyo: true,     // 来回运动
-          repeat: -1,     // 无限循环
-          ease: "sine.inOut"  // 平滑缓动
-        });
+        bounce(highlightSymbol, -1);
+        glowAnimation(highlightSymbol);
+
       });
+
     });
   }
 
@@ -378,10 +406,10 @@ type Sprites = PIXI.Sprite[]
       reelState.reel.children.forEach(symbol => {
         symbol.tint = 0xFFFFFF;
         gsap.killTweensOf(symbol);
-        symbol.y -= 10; 
+        symbol.y -= 10;
       });
     });
-     
+
   }
 
   // get total win amount
@@ -473,6 +501,32 @@ type Sprites = PIXI.Sprite[]
     return buttonSprite;
   }
 
+  // animated color filter
+  function applyAnimatedColorFilter(container: PIXI.Container, ticker: PIXI.Ticker) {
+
+    const filter = new ColorMatrixFilter();
+    container.filters = [filter as unknown as PIXI.Filter];
+
+    let count = 0;
+
+    ticker.add(() => {
+      if (container) {
+        container.scale.x = 0.4 + Math.sin(count) * 0.04;
+        container.scale.y = 0.4 + Math.cos(count) * 0.04;
+      }
+
+      count += 0.1;
+
+      const { matrix } = filter;
+
+      matrix[1] = Math.sin(count) * 3;
+      matrix[2] = Math.cos(count);
+      matrix[3] = Math.cos(count) * 1.5;
+      matrix[4] = Math.sin(count / 3) * 2;
+      matrix[5] = Math.sin(count / 2);
+      matrix[6] = Math.sin(count / 4);
+    });
+  }
 
 
   //load the assets
@@ -497,8 +551,6 @@ type Sprites = PIXI.Sprite[]
   const addReelAndRowSprite = new PIXI.Sprite(textures.heart);
   const reduceReelAndRowSprite = new PIXI.Sprite(textures.club);
 
-  const light1Sprite = new PIXI.Sprite(textures.light1)
-
   // create sprite map
   const SPRITE_MAP: { [key: number]: PIXI.Texture } = {
     0: PIXI.Assets.get("symbol1"),
@@ -519,14 +571,14 @@ type Sprites = PIXI.Sprite[]
   let wins: BE.Win[] = []  // win的类的数组(id,坐标和amount)
 
   // initial all reels
-  loadReels(BE.GetReelNum(), REEL_SIZE)
+  loadReels(BE.GetReelNum())
 
   // add reel and row button
   addReelAndRowButton.on('pointerdown', () => {
     removeReelSetByLabel();
     BE.SetReelNum(BE.GetReelNum() + 1)
     BE.SetRowNum(BE.GetRowNum() + 1)
-    loadReels(BE.GetReelNum(), REEL_SIZE)
+    loadReels(BE.GetReelNum())
   });
 
   // reduce reel and row button
@@ -534,7 +586,7 @@ type Sprites = PIXI.Sprite[]
     removeReelSetByLabel()
     BE.SetReelNum(BE.GetReelNum() - 1)
     BE.SetRowNum(BE.GetRowNum() - 1)
-    loadReels(BE.GetReelNum(), REEL_SIZE)
+    loadReels(BE.GetReelNum())
   });
 
   // start button
@@ -564,42 +616,6 @@ type Sprites = PIXI.Sprite[]
     }
 
   });
-
-
-
-
-  // function highightWinningSymbol(reelNum: number, rowNum: number, sprite: PIXI.Sprite) {
-  //   const highlightSymbol = spritesArray[reelNum][rowNum]
-  //   const light1 = sprite;
-  //   const container = new PIXI.Container();
-
-  //   container.position.set(highlightSymbol.x, highlightSymbol.y);
-
-  //   light1.anchor.set(0.5);        // 居中旋转
-  //   light1.position.set(0, 0);     // 放在容器中心
-  //   light1.scale.set(0.5);         // 根据需要调整大小
-
-  //   container.addChild(light1);
-
-  //   const glowFilter = new GlowFilter({
-  //     distance: 1,
-  //     outerStrength: 3,
-  //     innerStrength: 1,
-  //     color: 0xFFD700, // 金色
-  //     quality: 1
-  //   });
-
-  //   container.filters = [glowFilter as unknown as PIXI.Filter];
-  //   highlightSymbol.parent.addChild(container);
-
-  //   app.ticker.add(() => {
-  //     light1.rotation += 0.1;
-  //   });
-  // }
-
-
-
-
 
 
 })();
