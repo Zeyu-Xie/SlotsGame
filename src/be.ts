@@ -8,9 +8,9 @@ function temp(): number {
 }
 temp()
 
-
-const ROW_NUM = 4;
-const REEL_NUM = 6;
+// play area
+let ROW_NUM = 4;
+let REEL_NUM = 5;
 const SYMBOLS = [0, 1, 2, 3, 4, 5]
 
 const PAY_TABLE =
@@ -93,6 +93,14 @@ export function GetReelNum(): number {
     return REEL_NUM;
 }
 
+export function SetReelNum(value: number) {
+    REEL_NUM = value;
+}
+
+export function SetRowNum(value: number) {
+    ROW_NUM = value;
+}
+
 // get spin result
 function getRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min)) + min;
@@ -117,9 +125,9 @@ export function GetSpinResult(): SpinRes {
         }
         reelStops.push(symbols);
     }
-    console.log('reel1 '+ REEL_SET[0]);
-    
-    console.log('reelstopFirst '+ reelStopsFirst);
+    console.log('reel1 ' + REEL_SET[0]);
+
+    console.log('reelstopFirst ' + reelStopsFirst);
 
     return new SpinRes(reelStopsFirst, reelStops, winResults(reelStops));
 }
@@ -131,7 +139,7 @@ function winResults(reelStops: number[][]): Win[] {
     for (let symbolId = 0; symbolId < SYMBOLS.length; symbolId++) {
         let symbolNum = 0;
         let win = new Win(symbolId, [], 0)
-        
+
         // every reel
         for (let reelId = 0; reelId < REEL_NUM; reelId++) {
             const reelStop = reelStops[reelId]
