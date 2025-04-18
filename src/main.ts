@@ -16,15 +16,10 @@ type Sprites = PIXI.Sprite[]
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
   // define gloable variables
-  // let VISIBLE_TOP = app.screen.height * 2 / 7;
-  // let VISIBLE_BOTTOM = app.screen.height * 5 / 7;
   const REEL_GAP = 100;
   const CENTER_X = app.screen.width / 2;
   const CENTER_Y = app.screen.height / 2;
   const SCALE = 0.4;
-
-  const MASK_COLOR = 0x000000;
-  const MASK_ALPHA = 0.5;
 
   const SCROLL_DIRECTION_DOWN = 1;
   const SCROLL_DIRECTION_UP = -1;
@@ -47,39 +42,12 @@ type Sprites = PIXI.Sprite[]
   const REDUCE_REEL_ROW_BUTTON_Y = app.screen.height - 100;
   const REDUCE_REEL_ROW_BUTTON_SCALE = 1;
 
-  const STOP_SPRITES_INDEX_1 = 2;
-
   const SPACE = 80;
   const REEL_SIZE = BE.GetReelSet()[0].length;
   let REEL_SET_WIDTH = () => BE.GetReelNum() * REEL_GAP
   let REEL_SET_HIGHT = () => BE.GetRowNum() * SPACE
   let REEL_SET_X = () => CENTER_X - REEL_SET_WIDTH() / 2;
   let REEL_SET_Y = () => CENTER_Y - REEL_SET_HIGHT() / 2;
-  const MASK_TOP_X = () => 0;
-  const MASK_TOP_Y = () => 0;
-  const MASK_TOP_WIDTH = () => app.screen.width;
-  const MASK_TOP_HEIGHT = () => REEL_SET_Y() + 5;
-
-  const MASK_BOTTOM_X = () => MASK_TOP_X();
-  const MASK_BOTTOM_Y = () => MASK_TOP_HEIGHT() + BE.GetRowNum() * SPACE + 5;
-  const MASK_BOTTOM_WIDTH = () => MASK_TOP_WIDTH();
-  const MASK_BOTTOM_HEIGHT = () => MASK_TOP_HEIGHT();
-
-
-
-  // let VISIBLE_TOP = () => REEL_SET_Y() + 5;
-  // let VISIBLE_BOTTOM = () => VISIBLE_TOP() + BE.GetRowNum() * SPACE + 5;
-
-
-  // const GLOW_FILTER = new GlowFilter({
-  //   distance: 15, // 发光的扩散距离
-  //   outerStrength: 4,  // 外发光的强度
-  //   innerStrength: 1,
-  //   color: 0xFFD700,
-  //   quality: 0.5  // 质量，值越高效果越好
-  // });
-  // GLOW_FILTER.padding = 10;
-  // GLOW_FILTER.knockout = false;
 
   class ReelState {
     canMove: boolean;
@@ -130,10 +98,10 @@ type Sprites = PIXI.Sprite[]
 
       // loop of every sprites in one reel
       for (let j = 0; j < reelSize; j++) {
-        let spriteIndex = BE.GetReelSet()[i][j]; // 获取当前 reel 中的 sprite 索引
-        let texture = spriteMap[spriteIndex];  // 获取对应的纹理
-        let sprite = new PIXI.Sprite(texture); // 创建新的 sprite
-        sprite.label = '' + j;  // 给每个 sprite 设置一个 label（可以作为调试信息）
+        let spriteIndex = BE.GetReelSet()[i][j]; 
+        let texture = spriteMap[spriteIndex];  
+        let sprite = new PIXI.Sprite(texture); 
+        sprite.label = '' + j;  // set label for each sprite
         sprites.push(sprite);
       }
 
@@ -156,7 +124,6 @@ type Sprites = PIXI.Sprite[]
   function renderReel(reel: PIXI.Container, scale_index: number, space: number): void {
     for (let i = 0; i < reel.children.length; i++) {
       const sprite = reel.children[i];
-      // todo: extract this line to a function called arrange
       sprite.y = i * space;
       sprite.scale.set(scale_index);
     }
@@ -299,7 +266,6 @@ type Sprites = PIXI.Sprite[]
       if (reelState.decRate > 0.02) {
         reelState.decRate -= 0.0005;
       }
-      // console.log(reelState.decRate);
     }
 
     if (reelState.velocity < MIN_VELOCITY) {
@@ -322,7 +288,6 @@ type Sprites = PIXI.Sprite[]
     wins = spinResult.wins;
   }
 
-
   // stop
   function stopReelWithBounce(reelState: ReelState) {
     const isLabelMatched = reelState.reel.children[0].label === reelState.stopIndex;
@@ -334,11 +299,11 @@ type Sprites = PIXI.Sprite[]
       reelState.canStop = false;
 
       gsap.to(reelState.reel, {
-        y: REEL_SET_Y() + 10,       // 向上移动 10px
-        duration: 0.03,     // 每次移动时长
-        yoyo: true,     // 来回运动
-        repeat: 2,     // 无限循环
-        ease: "sine.inOut"  // 平滑缓动
+        y: REEL_SET_Y() + 10,       
+        duration: 0.03,    
+        yoyo: true,     
+        repeat: 2,     
+        ease: "sine.inOut"  
       });
     }
   }
@@ -359,30 +324,30 @@ type Sprites = PIXI.Sprite[]
   // bounce action
   function bounce(container: PIXI.Container, num:number) {
     gsap.to(container, {
-      y: container.y + 10,       // 向上移动 10px
-      duration: 0.2,     // 每次移动时长
-      yoyo: true,     // 来回运动
-      repeat: num,     // 无限循环
-      ease: "sine.inOut"  // 平滑缓动
+      y: container.y + 10,       
+      duration: 0.2,     
+      yoyo: true,    
+      repeat: num,     
+      ease: "sine.inOut"  
     });
   }
 
   // glow action
   function glowAnimation(sprite: PIXI.ContainerChild) {
     const glow = new GlowFilter({
-      color: 0xFFFFFF,         // 发光颜色：bai色
-      distance: 20,            // 发光范围距离
-      outerStrength: 0,        // 初始外发光强度（从0开始方便动画）
+      color: 0xFFFFFF,        
+      distance: 20,            
+      outerStrength: 0,       
       innerStrength: 0,
       quality: 6
     });
     sprite.filters = [glow];
     gsap.to(glow, {
-      duration: 1,          // 动画时长0.5秒
-      outerStrength: 4,       // 将外发光强度从0提高到4
+      duration: 1,        
+      outerStrength: 4,       
       ease: "easeInOut",
-      yoyo: true,             // 动画完毕后反转
-      repeat: -1              // 无限循环
+      yoyo: true,             
+      repeat: -1              
     });
   }
 
@@ -451,7 +416,7 @@ type Sprites = PIXI.Sprite[]
     });
   }
 
-  // 判断所有的 reel 是否都停止
+  // is all reels can show win
   function allReelsCanShowWin(): boolean {
     return reelStates.every(reelState => reelState.canShowWin);
   }
@@ -500,34 +465,6 @@ type Sprites = PIXI.Sprite[]
     app.stage.addChild(buttonSprite);
     return buttonSprite;
   }
-
-  // animated color filter
-  function applyAnimatedColorFilter(container: PIXI.Container, ticker: PIXI.Ticker) {
-
-    const filter = new ColorMatrixFilter();
-    container.filters = [filter as unknown as PIXI.Filter];
-
-    let count = 0;
-
-    ticker.add(() => {
-      if (container) {
-        container.scale.x = 0.4 + Math.sin(count) * 0.04;
-        container.scale.y = 0.4 + Math.cos(count) * 0.04;
-      }
-
-      count += 0.1;
-
-      const { matrix } = filter;
-
-      matrix[1] = Math.sin(count) * 3;
-      matrix[2] = Math.cos(count);
-      matrix[3] = Math.cos(count) * 1.5;
-      matrix[4] = Math.sin(count / 3) * 2;
-      matrix[5] = Math.sin(count / 2);
-      matrix[6] = Math.sin(count / 4);
-    });
-  }
-
 
   //load the assets
   PIXI.Assets.addBundle("assets", {
@@ -607,7 +544,6 @@ type Sprites = PIXI.Sprite[]
 
   });
 
-
   app.ticker.add((time: PIXI.Ticker) => {
 
     for (let i = 0; i < reelStates.length; i++) {
@@ -616,7 +552,6 @@ type Sprites = PIXI.Sprite[]
     }
 
   });
-
 
 })();
 
