@@ -2,8 +2,8 @@
 import * as PIXI from "pixi.js";
 import { gsap } from 'gsap';
 import * as BE from './be.ts';
-import { ColorMatrixFilter } from '@pixi/filter-color-matrix';
 import { GlowFilter } from 'pixi-filters';
+import { sound, Sound } from '@pixi/sound';
 
 // define the name of the type 'PIXI.Sprite[]'
 type Sprites = PIXI.Sprite[]
@@ -12,23 +12,26 @@ type Sprites = PIXI.Sprite[]
 
   // Create and initialize a new application
   const app = new PIXI.Application();
-  await app.init({ background: "#1099bb", resizeTo: window });
+  await app.init({ resizeTo: window });
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
   // define gloable variables
-  const REEL_GAP = 100;
+  const REEL_GAP = 140;
   const CENTER_X = app.screen.width / 2;
   const CENTER_Y = app.screen.height / 2;
-  const SCALE = 0.4;
+  const SCALE = 0.6;
 
   const SCROLL_DIRECTION_DOWN = 1;
   const SCROLL_DIRECTION_UP = -1;
 
-  const MOVE_VELOCITY = 5;
   const MAX_VELOCITY = 50;
   const MIN_VELOCITY = 13;
   const VELOCITY_INCREASE_RATE = 0.9;
   const VELOCITY_DECREASE_RATE = 0.5;
+
+  const MUSICBUTTON_X = 20;
+  const MUSICBUTTON_Y = 20;
+  const MUSICBUTTON_SCALE = 0.3;
 
   const ACTIONBUTTON_X = 0;
   const ACTIONBUTTON_Y = 0;
@@ -42,7 +45,7 @@ type Sprites = PIXI.Sprite[]
   const REDUCE_REEL_ROW_BUTTON_Y = app.screen.height - 100;
   const REDUCE_REEL_ROW_BUTTON_SCALE = 1;
 
-  const SPACE = 80;
+  const SPACE = 130;
   const REEL_SIZE = BE.GetReelSet()[0].length;
   let REEL_SET_WIDTH = () => BE.GetReelNum() * REEL_GAP
   let REEL_SET_HIGHT = () => BE.GetRowNum() * SPACE
@@ -85,8 +88,72 @@ type Sprites = PIXI.Sprite[]
     get isAtStartPosition(): boolean {
       return Math.abs(this.reel.y - REEL_SET_Y()) < 2;
     }
-
   }
+
+  // set mp4 background
+  const video = document.createElement('video');
+  video.src = '/assets/bg4.mp4';
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.autoplay = true;
+  
+  await video.play().catch(e => console.warn('Autoplay blocked:', e));
+  
+  // 创建纹理和精灵
+  const texture = PIXI.Texture.from(video);
+  const bg = new PIXI.Sprite(texture);
+  
+  // 👉 cover 效果：等比放大，允许裁切
+  const scale = Math.max(
+    app.screen.width / bg.texture.width,
+    app.screen.height / bg.texture.height
+  );
+  bg.scale.set(scale);
+  
+  // 居中对齐
+  bg.anchor.set(0.5);
+  bg.x = app.screen.width / 2;
+  bg.y = app.screen.height / 2;
+  
+  app.stage.addChildAt(bg, 0);
+  
+  // set background music
+  const bgm = sound.add('bgm', {
+    url: '/assets/bgMusic.mp3',
+    autoPlay: false,
+    loop: true,
+    volume: 0
+  });
+  fadeInAudio(bgm, 3000);
+
+  // background music fade in 
+  function fadeInAudio(audio: Sound, duration = 2000) {
+    let start = performance.now();
+    function step(time: number) {
+      const progress = Math.min((time - start) / duration, 1);
+      audio.volume = progress;
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+    audio.play();
+  }
+
+  // background music fade out
+  function fadeOutAudio(audio: Sound, duration = 2000) {
+    let start = performance.now();
+    const startVolume = audio.volume;
+    function step(time: number) {
+      const progress = Math.min((time - start) / duration, 1);
+      audio.volume = startVolume * (1 - progress);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        audio.stop(); // 最后停止播放
+      }
+    }
+    requestAnimationFrame(step);
+  }  
 
   // create sprites array for reel set 
   function createReelsSprites(reelNum: number, reelSize: number, spriteMap: { [key: number]: PIXI.Texture }): Sprites[] {
@@ -98,16 +165,14 @@ type Sprites = PIXI.Sprite[]
 
       // loop of every sprites in one reel
       for (let j = 0; j < reelSize; j++) {
-        let spriteIndex = BE.GetReelSet()[i][j]; 
-        let texture = spriteMap[spriteIndex];  
-        let sprite = new PIXI.Sprite(texture); 
+        let spriteIndex = BE.GetReelSet()[i][j];
+        let texture = spriteMap[spriteIndex];
+        let sprite = new PIXI.Sprite(texture);
         sprite.label = '' + j;  // set label for each sprite
         sprites.push(sprite);
       }
-
       spritesArray.push(sprites);
     }
-
     return spritesArray;
   }
 
@@ -180,7 +245,7 @@ type Sprites = PIXI.Sprite[]
     const spritesArray = createReelsSprites(reelNum, REEL_SIZE, SPRITE_MAP);
     const reels = createReels(spritesArray, SCALE, SPACE);
     const reelSet = createReelSet(reels, REEL_SET_X(), REEL_SET_Y() + 10, REEL_GAP);
-    reelSet.filterArea = new PIXI.Rectangle(REEL_SET_X(), REEL_SET_Y(), REEL_SET_WIDTH(), REEL_SET_HIGHT() + 10);
+    reelSet.filterArea = new PIXI.Rectangle(REEL_SET_X(), REEL_SET_Y(), REEL_SET_WIDTH(), REEL_SET_HIGHT() + 15);
     reelSet.filters = [new PIXI.AlphaFilter()];
     reelSet.label = 'reelSet';
     app.stage.addChild(reelSet);
@@ -223,23 +288,18 @@ type Sprites = PIXI.Sprite[]
     return false;
   }
 
-  // reposition
-  function reposition(reposition: number): number {
-    return reposition
-  }
-
   // move and wrap
   function moveAndWrap(reel: PIXI.Container, space: number, deltaTime: number, direction: number, velocity: number): void {
     move(reel, direction, deltaTime, velocity)
 
     if (checkWrap(reel, direction) && direction === SCROLL_DIRECTION_DOWN) {
       wrap(reel, space, REEL_SIZE - 1, 0);
-      reel.y = reposition(REEL_SET_Y());
+      reel.y = REEL_SET_Y();
     }
 
     if (checkWrap(reel, direction) && direction === SCROLL_DIRECTION_UP) {
       wrap(reel, space, 0, REEL_SIZE - 1);
-      reel.y = reposition(REEL_SET_Y());
+      reel.y = REEL_SET_Y();
     }
   }
 
@@ -252,8 +312,8 @@ type Sprites = PIXI.Sprite[]
   }
 
   // acceleration
-  function acceleration(reelState: ReelState, maxVelocity: number, increaseRate: number): void {
-    if (reelState.velocity < maxVelocity) {
+  function acceleration(reelState: ReelState, increaseRate: number): void {
+    if (reelState.velocity < MAX_VELOCITY) {
       reelState.velocity += increaseRate;
     }
   }
@@ -299,11 +359,11 @@ type Sprites = PIXI.Sprite[]
       reelState.canStop = false;
 
       gsap.to(reelState.reel, {
-        y: REEL_SET_Y() + 10,       
-        duration: 0.03,    
-        yoyo: true,     
-        repeat: 2,     
-        ease: "sine.inOut"  
+        y: REEL_SET_Y() + 10,
+        duration: 0.03,
+        yoyo: true,
+        repeat: 2,
+        ease: "sine.inOut"
       });
     }
   }
@@ -322,32 +382,32 @@ type Sprites = PIXI.Sprite[]
   }
 
   // bounce action
-  function bounce(container: PIXI.Container, num:number) {
+  function bounce(container: PIXI.Container, num: number) {
     gsap.to(container, {
-      y: container.y + 10,       
-      duration: 0.2,     
-      yoyo: true,    
-      repeat: num,     
-      ease: "sine.inOut"  
+      y: container.y + 10,
+      duration: 0.2,
+      yoyo: true,
+      repeat: num,
+      ease: "sine.inOut"
     });
   }
 
   // glow action
   function glowAnimation(sprite: PIXI.ContainerChild) {
     const glow = new GlowFilter({
-      color: 0xFFFFFF,        
-      distance: 20,            
-      outerStrength: 0,       
+      color: 0xFFFFFF,
+      distance: 20,
+      outerStrength: 0,
       innerStrength: 0,
-      quality: 6
+      quality: 0.3
     });
     sprite.filters = [glow];
     gsap.to(glow, {
-      duration: 1,        
-      outerStrength: 4,       
+      duration: 1,
+      outerStrength: 4,
       ease: "easeInOut",
-      yoyo: true,             
-      repeat: -1              
+      yoyo: true,
+      repeat: 4
     });
   }
 
@@ -359,7 +419,6 @@ type Sprites = PIXI.Sprite[]
 
         bounce(highlightSymbol, -1);
         glowAnimation(highlightSymbol);
-
       });
     });
   }
@@ -428,7 +487,7 @@ type Sprites = PIXI.Sprite[]
     }
 
     if (reelState.canAcc) {
-      acceleration(reelState, MAX_VELOCITY, VELOCITY_INCREASE_RATE);
+      acceleration(reelState, VELOCITY_INCREASE_RATE);
     }
 
     if (reelState.canDeceleration) {
@@ -440,6 +499,8 @@ type Sprites = PIXI.Sprite[]
     }
 
     if (allReelsCanShowWin()) {
+      console.log("uviytvkhb");
+
       highlightWinningSymbols(wins);
       const totalWinAmount = getTotalWinAmount(wins);
       console.log(`Total Win Amount: ${totalWinAmount}`);
@@ -456,9 +517,8 @@ type Sprites = PIXI.Sprite[]
     return buttonTexture
   }
 
-
   // create and render the action button
-  function createAndRenderButton(buttonSprite: PIXI.Sprite, buttonX: number, buttonY: number, scale_index: number): PIXI.Container {
+  function createAndRenderButton(buttonSprite: PIXI.Sprite, buttonX: number, buttonY: number, scale_index: number): PIXI.Sprite {
     buttonSprite.x = buttonX;
     buttonSprite.y = buttonY;
     buttonSprite.scale.set(scale_index);
@@ -481,9 +541,13 @@ type Sprites = PIXI.Sprite[]
     symbol4: "/assets/4.png",
     symbol5: "/assets/5.png",
     symbol6: "/assets/6.png",
+    bgMusicOn: "/assets/musicOn.jpg",
+    bgMusicOff: "/assets/musicOff.jpg",
   });
   const textures = await PIXI.Assets.loadBundle("assets");
 
+  const musicOn = new PIXI.Sprite(textures.bgMusicOn);
+  const musicOff = new PIXI.Sprite(textures.bgMusicOff);
   const actionButtonSprite = new PIXI.Sprite(textures.bunny);
   const addReelAndRowSprite = new PIXI.Sprite(textures.heart);
   const reduceReelAndRowSprite = new PIXI.Sprite(textures.club);
@@ -499,6 +563,7 @@ type Sprites = PIXI.Sprite[]
   }
 
   // create and render button
+  const bgMusicButton = createAndRenderButton(setButtonActionMode(musicOn), MUSICBUTTON_X, MUSICBUTTON_Y, MUSICBUTTON_SCALE);
   const actionButton = createAndRenderButton(setButtonActionMode(actionButtonSprite), ACTIONBUTTON_X, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
   const addReelAndRowButton = createAndRenderButton(setButtonActionMode(addReelAndRowSprite), ADD_REEL_ROW_BUTTON_X, ADD_REEL_ROW_BUTTON_Y, ADD_REEL_ROW_BUTTON_SCALE);
   const reduceReelAndRowButton = createAndRenderButton(setButtonActionMode(reduceReelAndRowSprite), REDUCE_REEL_ROW_BUTTON_X, REDUCE_REEL_ROW_BUTTON_Y, REDUCE_REEL_ROW_BUTTON_SCALE);
@@ -509,6 +574,20 @@ type Sprites = PIXI.Sprite[]
 
   // initial all reels
   loadReels(BE.GetReelNum())
+
+  // add background button
+  let isPlaying = true;
+  bgMusicButton.on('pointerdown', () => {
+    if (isPlaying) {
+      fadeOutAudio(bgm, 2000);
+      bgMusicButton.texture = textures.bgMusicOff; //  切换成关闭图标
+    } else {
+      fadeInAudio(bgm, 3000);
+      bgMusicButton.texture = textures.bgMusicOn; //  切换成播放图标
+    }
+    isPlaying = !isPlaying;
+  });
+  
 
   // add reel and row button
   addReelAndRowButton.on('pointerdown', () => {
@@ -541,7 +620,6 @@ type Sprites = PIXI.Sprite[]
     setTimeout(() => {
       triggerStop();
     }, 800);
-
   });
 
   app.ticker.add((time: PIXI.Ticker) => {
