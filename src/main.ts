@@ -52,6 +52,10 @@ type Sprites = PIXI.Sprite[]
   let REEL_SET_X = () => CENTER_X - REEL_SET_WIDTH() / 2;
   let REEL_SET_Y = () => CENTER_Y - REEL_SET_HIGHT() / 2;
 
+  // backgouund mp4
+  const BG_X=app.screen.width / 2;
+  const BG_Y=app.screen.height / 2;
+
   // set background music parameters
   const BGM_AUTOPLAY = false;
   const BGM_LOOP = true;
@@ -79,7 +83,7 @@ type Sprites = PIXI.Sprite[]
   const REEL_ROLL_VOLUME = 1;
 
   // set reel stop sound parameters
-  const REEL_STOP_SOUND = '/assets/reelStop.mp3'
+  const REEL_STOP_SOUND = '/assets/reelStop1.mp3'
   const REEL_STOP_AUTOPLAY = false;
   const REEL_STOP_LOOP = false;
   const REEL_STOP_VOLUME = 1;
@@ -130,31 +134,8 @@ type Sprites = PIXI.Sprite[]
   }
 
   // set mp4 background
-  const video = document.createElement('video');
-  video.src = '/assets/bg4.mp4';
-  video.loop = true;
-  video.muted = true;
-  video.playsInline = true;
-  video.autoplay = true;
-  await video.play().catch(e => console.warn('Autoplay blocked:', e));
-
-  // 创建纹理和精灵
-  const texture = PIXI.Texture.from(video);
-  const bg = new PIXI.Sprite(texture);
-
-  //  cover 效果：等比放大，允许裁切
-  const scale = Math.max(
-    app.screen.width / bg.texture.width,
-    app.screen.height / bg.texture.height
-  );
-  bg.scale.set(scale);
-
-  // 居中对齐
-  bg.anchor.set(0.5);
-  bg.x = app.screen.width / 2;
-  bg.y = app.screen.height / 2;
-
-  app.stage.addChildAt(bg, 0);
+  await createVideoBackground(app, '/assets/bg4.mp4', BG_X, BG_Y, 0);
+  // await createVideoBackground(app, '/assets/bgReel.mp4', BG_X, BG_Y, 1, 0.5);
 
   // set bgm
   const bgm = music('/assets/bgMusic.mp3', BGM_AUTOPLAY, BGM_LOOP, BGM_INITIAL_VOLUME);
@@ -166,6 +147,45 @@ type Sprites = PIXI.Sprite[]
   const reelRollSound = music(REEL_ROLL_SOUND, REEL_ROLL_AUTOPLAY, REEL_ROLL_LOOP, REEL_ROLL_VOLUME);
   const reelStopSound = music(REEL_STOP_SOUND, REEL_STOP_AUTOPLAY, REEL_STOP_LOOP, REEL_STOP_VOLUME);
   const playWinSound = music(PLAY_WIN_SOUND, PLAY_WIN_AUTOPLAY, PLAY_WIN_LOOP, PLAY_WIN_VOLUME);
+
+
+
+  // set background mp4
+  async function createVideoBackground(app: PIXI.Application, videoUrl: string, x:number,y:number, layer:number, scale?:number): Promise<PIXI.Sprite> {
+    const video = document.createElement('video');
+    video.src = videoUrl;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.autoplay = true;
+  
+    try {
+      await video.play();
+    } catch (e) {
+      console.warn('Autoplay blocked:', e);
+    }
+  
+    // 创建纹理和精灵
+    const texture = PIXI.Texture.from(video);
+    const bg = new PIXI.Sprite(texture);
+  
+    // cover 效果：等比放大，允许裁切
+    const finalScale = scale ?? Math.max(
+      app.screen.width / bg.texture.width,
+      app.screen.height / bg.texture.height
+    );
+    bg.scale.set(finalScale);
+  
+    // 居中
+    bg.anchor.set(0.5);
+    bg.x = x;
+    bg.y = y;
+  
+    // 添加到舞台底层
+    app.stage.addChildAt(bg, layer);
+  
+    return bg;
+  }
 
   // set music
   function music(url: string, autoplay: boolean, loop: boolean, volume: number): Sound {
@@ -566,7 +586,7 @@ type Sprites = PIXI.Sprite[]
       const totalWinAmount = getTotalWinAmount(wins);
       console.log(`Total Win Amount: ${totalWinAmount}`);
       createAmountText(`Total Win Amount: ${totalWinAmount}`)
-      playClickSound(playWinSound);
+      if(totalWinAmount>0){playClickSound(playWinSound)};
       reelState.canShowWin = false;
     }
 
