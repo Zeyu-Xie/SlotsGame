@@ -33,17 +33,17 @@ type Sprites = PIXI.Sprite[]
   const MUSICBUTTON_Y = 20;
   const MUSICBUTTON_SCALE = 0.3;
 
-  const ACTIONBUTTON_X = 0;
-  const ACTIONBUTTON_Y = 0;
-  const ACTIONBUTTON_SCALE = 2;
+  const ACTIONBUTTON_X = app.screen.width - 300;
+  const ACTIONBUTTON_Y = app.screen.height - 200;
+  const ACTIONBUTTON_SCALE = 1;
 
-  const ADD_REEL_ROW_BUTTON_X = app.screen.width - 100;
-  const ADD_REEL_ROW_BUTTON_Y = app.screen.height - 100;
-  const ADD_REEL_ROW_BUTTON_SCALE = 1;
+  const ADD_REEL_ROW_BUTTON_X = ACTIONBUTTON_X - 100;
+  const ADD_REEL_ROW_BUTTON_Y = ACTIONBUTTON_Y
+  const ADD_REEL_ROW_BUTTON_SCALE = 0.5;
 
-  const REDUCE_REEL_ROW_BUTTON_X = 0;
-  const REDUCE_REEL_ROW_BUTTON_Y = app.screen.height - 100;
-  const REDUCE_REEL_ROW_BUTTON_SCALE = 1;
+  const REDUCE_REEL_ROW_BUTTON_X = ACTIONBUTTON_X - 100;
+  const REDUCE_REEL_ROW_BUTTON_Y = ACTIONBUTTON_Y + 100;
+  const REDUCE_REEL_ROW_BUTTON_SCALE = 0.5;
 
   const SPACE = 130;
   const REEL_SIZE = BE.GetReelSet()[0].length;
@@ -52,6 +52,45 @@ type Sprites = PIXI.Sprite[]
   let REEL_SET_X = () => CENTER_X - REEL_SET_WIDTH() / 2;
   let REEL_SET_Y = () => CENTER_Y - REEL_SET_HIGHT() / 2;
 
+  // set background music parameters
+  const BGM_AUTOPLAY = false;
+  const BGM_LOOP = true;
+  const BGM_INITIAL_VOLUME = 0;
+  const BGM_FADE_DURATION = 2000;
+  const BGM_FADE_MAX_VOLUME = 0.3;
+
+  // set click start button sound parameters
+  const START_CLICK_SOUND = '/assets/bgmClickDuang.mp3'
+  const START_CLICK_AUTOPLAY = false;
+  const START_CLICK_LOOP = false;
+  const START_CLICK_VOLUME = 0.4;
+
+  // set click add/reduce button sound parameters
+  const REEL_CLICK_SOUND = '/assets/bling.mp3'
+  const REEL_CLICK_AUTOPLAY = false;
+  const REEL_CLICK_LOOP = false;
+  const REEL_CLICK_VOLUME = 0.4;
+
+  // set reel roll sound parameters
+  // const REEL_ROLL_SOUND = '/assets/reelStep1.5.mp3'
+  const REEL_ROLL_SOUND = '/assets/hu.mp3'
+  const REEL_ROLL_AUTOPLAY = false;
+  const REEL_ROLL_LOOP = false;
+  const REEL_ROLL_VOLUME = 1;
+
+  // set reel stop sound parameters
+  const REEL_STOP_SOUND = '/assets/reelStop.mp3'
+  const REEL_STOP_AUTOPLAY = false;
+  const REEL_STOP_LOOP = false;
+  const REEL_STOP_VOLUME = 1;
+
+  // set play win sound parameters
+  const PLAY_WIN_SOUND = '/assets/playWin.mp3'
+  const PLAY_WIN_AUTOPLAY = false;
+  const PLAY_WIN_LOOP = false;
+  const PLAY_WIN_VOLUME = 1;
+
+  // define reel state
   class ReelState {
     canMove: boolean;
     velocity: number;
@@ -97,42 +136,59 @@ type Sprites = PIXI.Sprite[]
   video.muted = true;
   video.playsInline = true;
   video.autoplay = true;
-  
   await video.play().catch(e => console.warn('Autoplay blocked:', e));
-  
+
   // 创建纹理和精灵
   const texture = PIXI.Texture.from(video);
   const bg = new PIXI.Sprite(texture);
-  
-  // 👉 cover 效果：等比放大，允许裁切
+
+  //  cover 效果：等比放大，允许裁切
   const scale = Math.max(
     app.screen.width / bg.texture.width,
     app.screen.height / bg.texture.height
   );
   bg.scale.set(scale);
-  
+
   // 居中对齐
   bg.anchor.set(0.5);
   bg.x = app.screen.width / 2;
   bg.y = app.screen.height / 2;
-  
+
   app.stage.addChildAt(bg, 0);
-  
-  // set background music
-  const bgm = sound.add('bgm', {
-    url: '/assets/bgMusic.mp3',
-    autoPlay: false,
-    loop: true,
-    volume: 0
-  });
-  fadeInAudio(bgm, 3000);
+
+  // set bgm
+  const bgm = music('/assets/bgMusic.mp3', BGM_AUTOPLAY, BGM_LOOP, BGM_INITIAL_VOLUME);
+  fadeInAudio(bgm, BGM_FADE_DURATION, BGM_FADE_MAX_VOLUME);
+
+  // set sounds
+  const bgmClickSound = music(START_CLICK_SOUND, START_CLICK_AUTOPLAY, START_CLICK_LOOP, START_CLICK_VOLUME);
+  const reelClickSound = music(REEL_CLICK_SOUND, REEL_CLICK_AUTOPLAY, REEL_CLICK_LOOP, REEL_CLICK_VOLUME);
+  const reelRollSound = music(REEL_ROLL_SOUND, REEL_ROLL_AUTOPLAY, REEL_ROLL_LOOP, REEL_ROLL_VOLUME);
+  const reelStopSound = music(REEL_STOP_SOUND, REEL_STOP_AUTOPLAY, REEL_STOP_LOOP, REEL_STOP_VOLUME);
+  const playWinSound = music(PLAY_WIN_SOUND, PLAY_WIN_AUTOPLAY, PLAY_WIN_LOOP, PLAY_WIN_VOLUME);
+
+  // set music
+  function music(url: string, autoplay: boolean, loop: boolean, volume: number): Sound {
+    const bgm = sound.add('bgm', {
+      url: url,
+      autoPlay: autoplay,
+      loop: loop,
+      volume: volume, // 方便做淡入
+    });
+    return bgm;
+  }
+
+  // play click sound
+  function playClickSound(soundName: Sound) {
+    soundName.play();
+  }
 
   // background music fade in 
-  function fadeInAudio(audio: Sound, duration = 2000) {
+  function fadeInAudio(audio: Sound, duration: number, maxVolume: number) {
     let start = performance.now();
     function step(time: number) {
       const progress = Math.min((time - start) / duration, 1);
-      audio.volume = progress;
+      audio.volume = maxVolume * progress; // 👈 控制最大音量
       if (progress < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -140,20 +196,24 @@ type Sprites = PIXI.Sprite[]
   }
 
   // background music fade out
-  function fadeOutAudio(audio: Sound, duration = 2000) {
+  function fadeOutAudio(audio: Sound, duration: number, maxVolume: number) {
     let start = performance.now();
-    const startVolume = audio.volume;
+
+    // 取当前音量和 maxVolume 中的较小值作为起始音量
+    const startVolume = Math.min(audio.volume, maxVolume);
+
     function step(time: number) {
       const progress = Math.min((time - start) / duration, 1);
-      audio.volume = startVolume * (1 - progress);
+      audio.volume = startVolume * (1 - progress); // 渐变到 0
       if (progress < 1) {
         requestAnimationFrame(step);
       } else {
-        audio.stop(); // 最后停止播放
+        audio.stop(); // 完成后停止播放
       }
     }
+
     requestAnimationFrame(step);
-  }  
+  }
 
   // create sprites array for reel set 
   function createReelsSprites(reelNum: number, reelSize: number, spriteMap: { [key: number]: PIXI.Texture }): Sprites[] {
@@ -365,6 +425,8 @@ type Sprites = PIXI.Sprite[]
         repeat: 2,
         ease: "sine.inOut"
       });
+
+      playClickSound(reelStopSound);
     }
   }
 
@@ -453,9 +515,9 @@ type Sprites = PIXI.Sprite[]
     const text = new PIXI.Text({
       text: showText,
       style: {
-        fontFamily: 'Arial',
-        fontSize: 24,
-        fill: 0xff1010,
+        fontFamily: 'Impact, Comic Sans MS',
+        fontSize: 48,
+        fill: 0xFFFFFF,
         align: 'center',
       }
     });
@@ -463,6 +525,7 @@ type Sprites = PIXI.Sprite[]
     text.x = (app.screen.width - text.width) / 2;
     text.y = REEL_SET_Y() - 100;
     app.stage.addChild(text);
+
   }
 
   // clear amount text
@@ -499,12 +562,11 @@ type Sprites = PIXI.Sprite[]
     }
 
     if (allReelsCanShowWin()) {
-      console.log("uviytvkhb");
-
       highlightWinningSymbols(wins);
       const totalWinAmount = getTotalWinAmount(wins);
       console.log(`Total Win Amount: ${totalWinAmount}`);
       createAmountText(`Total Win Amount: ${totalWinAmount}`)
+      playClickSound(playWinSound);
       reelState.canShowWin = false;
     }
 
@@ -528,11 +590,8 @@ type Sprites = PIXI.Sprite[]
 
   //load the assets
   PIXI.Assets.addBundle("assets", {
-    bunny: "/assets/bunny.png",
     gift: "/assets/gift.png",
-    club: "/assets/club.png",
     diamond: "/assets/diamond.png",
-    heart: "/assets/heart.png",
     spade: "/assets/spade.png",
     light1: 'https://pixijs.com/assets/light_rotate_1.png',
     symbol1: "/assets/1.png",
@@ -541,16 +600,18 @@ type Sprites = PIXI.Sprite[]
     symbol4: "/assets/4.png",
     symbol5: "/assets/5.png",
     symbol6: "/assets/6.png",
-    bgMusicOn: "/assets/musicOn.jpg",
-    bgMusicOff: "/assets/musicOff.jpg",
+    start: "/assets/spin.png",
+    reduceButton: "/assets/reduce.png",
+    addButton: "/assets/add.png",
+    bgMusicOn: "/assets/musicOn.png",
+    bgMusicOff: "/assets/musicOff.png",
   });
   const textures = await PIXI.Assets.loadBundle("assets");
 
   const musicOn = new PIXI.Sprite(textures.bgMusicOn);
-  const musicOff = new PIXI.Sprite(textures.bgMusicOff);
-  const actionButtonSprite = new PIXI.Sprite(textures.bunny);
-  const addReelAndRowSprite = new PIXI.Sprite(textures.heart);
-  const reduceReelAndRowSprite = new PIXI.Sprite(textures.club);
+  const actionButtonSprite = new PIXI.Sprite(textures.start);
+  const addReelAndRowSprite = new PIXI.Sprite(textures.addButton);
+  const reduceReelAndRowSprite = new PIXI.Sprite(textures.reduceButton);
 
   // create sprite map
   const SPRITE_MAP: { [key: number]: PIXI.Texture } = {
@@ -579,18 +640,21 @@ type Sprites = PIXI.Sprite[]
   let isPlaying = true;
   bgMusicButton.on('pointerdown', () => {
     if (isPlaying) {
-      fadeOutAudio(bgm, 2000);
+      fadeOutAudio(bgm, BGM_FADE_DURATION, BGM_FADE_MAX_VOLUME);
+      playClickSound(bgmClickSound);
       bgMusicButton.texture = textures.bgMusicOff; //  切换成关闭图标
     } else {
-      fadeInAudio(bgm, 3000);
+      fadeInAudio(bgm, BGM_FADE_DURATION, BGM_FADE_MAX_VOLUME);
+      playClickSound(bgmClickSound);
       bgMusicButton.texture = textures.bgMusicOn; //  切换成播放图标
     }
     isPlaying = !isPlaying;
   });
-  
+
 
   // add reel and row button
   addReelAndRowButton.on('pointerdown', () => {
+    playClickSound(reelClickSound);
     removeReelSetByLabel();
     BE.SetReelNum(BE.GetReelNum() + 1)
     BE.SetRowNum(BE.GetRowNum() + 1)
@@ -599,6 +663,7 @@ type Sprites = PIXI.Sprite[]
 
   // reduce reel and row button
   reduceReelAndRowButton.on('pointerdown', () => {
+    playClickSound(reelClickSound);
     removeReelSetByLabel()
     BE.SetReelNum(BE.GetReelNum() - 1)
     BE.SetRowNum(BE.GetRowNum() - 1)
@@ -607,6 +672,7 @@ type Sprites = PIXI.Sprite[]
 
   // start button
   actionButton.on('pointerdown', () => {
+    playClickSound(reelRollSound);
     clearAllHighlights();
     clearTextByLabel("winAmount");
     reelStates.forEach((reel) => {
