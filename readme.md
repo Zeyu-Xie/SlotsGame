@@ -11,6 +11,8 @@ Below is the complete overview of this Slots Game project :)
 - Support for custom symbols and flexible PAY_TABLE design.
 - Win animations and result display.
 - Basic state machine: Idle → Spinning → Evaluating → ShowingResult → Idle.
+![process](https://github.com/user-attachments/assets/34b0b536-113c-4875-9ee0-8cd438e17c8d)
+> these are some of the processes of the slots game development
 
 # 3 Design and Implementation
 ## 3-1 System architecture
