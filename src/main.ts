@@ -53,8 +53,8 @@ type Sprites = PIXI.Sprite[]
   let REEL_SET_Y = () => CENTER_Y - REEL_SET_HIGHT() / 2;
 
   // backgouund mp4
-  const BG_X=app.screen.width / 2;
-  const BG_Y=app.screen.height / 2;
+  const BG_X = app.screen.width / 2;
+  const BG_Y = app.screen.height / 2;
 
   // set background music parameters
   const BGM_AUTOPLAY = false;
@@ -94,13 +94,18 @@ type Sprites = PIXI.Sprite[]
   const PLAY_WIN_LOOP = false;
   const PLAY_WIN_VOLUME = 1;
 
+  // set click error sound parameters
+  const CLICK_ERROR_SOUND = '/assets/clickError.mp3'
+  const CLICK_ERROR_AUTOPLAY = false;
+  const CLICK_ERROR_LOOP = false;
+  const CLICK_ERROR_VOLUME = 1;
+
   // define reel state
   class ReelState {
     canMove: boolean;
     velocity: number;
     canDeceleration: boolean;
     canStop: boolean;
-    canWrap: boolean;
     direction: number;
     stopIndex: string;
     reel: PIXI.Container;
@@ -112,7 +117,6 @@ type Sprites = PIXI.Sprite[]
       this.velocity = 0;
       this.canDeceleration = false;
       this.canStop = false;
-      this.canWrap = false;
       this.direction = direction;
       this.stopIndex = '0';
       this.reel = reel;
@@ -147,43 +151,42 @@ type Sprites = PIXI.Sprite[]
   const reelRollSound = music(REEL_ROLL_SOUND, REEL_ROLL_AUTOPLAY, REEL_ROLL_LOOP, REEL_ROLL_VOLUME);
   const reelStopSound = music(REEL_STOP_SOUND, REEL_STOP_AUTOPLAY, REEL_STOP_LOOP, REEL_STOP_VOLUME);
   const playWinSound = music(PLAY_WIN_SOUND, PLAY_WIN_AUTOPLAY, PLAY_WIN_LOOP, PLAY_WIN_VOLUME);
-
-
+  const clickErrorSound = music(CLICK_ERROR_SOUND, CLICK_ERROR_AUTOPLAY, CLICK_ERROR_LOOP, CLICK_ERROR_VOLUME);
 
   // set background mp4
-  async function createVideoBackground(app: PIXI.Application, videoUrl: string, x:number,y:number, layer:number, scale?:number): Promise<PIXI.Sprite> {
+  async function createVideoBackground(app: PIXI.Application, videoUrl: string, x: number, y: number, layer: number, scale?: number): Promise<PIXI.Sprite> {
     const video = document.createElement('video');
     video.src = videoUrl;
     video.loop = true;
     video.muted = true;
     video.playsInline = true;
     video.autoplay = true;
-  
+
     try {
       await video.play();
     } catch (e) {
       console.warn('Autoplay blocked:', e);
     }
-  
+
     // 创建纹理和精灵
     const texture = PIXI.Texture.from(video);
     const bg = new PIXI.Sprite(texture);
-  
+
     // cover 效果：等比放大，允许裁切
     const finalScale = scale ?? Math.max(
       app.screen.width / bg.texture.width,
       app.screen.height / bg.texture.height
     );
     bg.scale.set(finalScale);
-  
+
     // 居中
     bg.anchor.set(0.5);
     bg.x = x;
     bg.y = y;
-  
+
     // 添加到舞台底层
     app.stage.addChildAt(bg, layer);
-  
+
     return bg;
   }
 
@@ -327,9 +330,16 @@ type Sprites = PIXI.Sprite[]
     const reelSet = createReelSet(reels, REEL_SET_X(), REEL_SET_Y() + 10, REEL_GAP);
     reelSet.filterArea = new PIXI.Rectangle(REEL_SET_X(), REEL_SET_Y(), REEL_SET_WIDTH(), REEL_SET_HIGHT() + 15);
     reelSet.filters = [new PIXI.AlphaFilter()];
-    reelSet.label = 'reelSet';
-    app.stage.addChild(reelSet);
+    const playArea = new PIXI.Container();
+    const bgReel = new PIXI.Sprite(textures.bgReel);
+    playArea.addChild(bgReel);
+    playArea.addChild(reelSet);
+    app.stage.addChild(playArea);
+    bgReel.scale.set(REEL_SET_WIDTH() / 1190);
+    playArea.label = 'reelSet';
     reelStates = createReelStates(reels);
+    bgReel.x = REEL_SET_X() - 30;
+    bgReel.y = REEL_SET_Y() - 30;
     wins = [];
     bounce(reelSet, 2);
   }
@@ -351,6 +361,7 @@ type Sprites = PIXI.Sprite[]
     }
   }
 
+  // wrap the reel
   function wrap(reel: PIXI.Container, space: number, fromIndex: number, toIndex: number): void {
     const removedSprite = reel.children[fromIndex];
     reel.removeChild(removedSprite);
@@ -585,8 +596,8 @@ type Sprites = PIXI.Sprite[]
       highlightWinningSymbols(wins);
       const totalWinAmount = getTotalWinAmount(wins);
       console.log(`Total Win Amount: ${totalWinAmount}`);
-      createAmountText(`Total Win Amount: ${totalWinAmount}`)
-      if(totalWinAmount>0){playClickSound(playWinSound)};
+      createAmountText(`Total Win Amount: ${totalWinAmount} €`)
+      if (totalWinAmount > 0) { playClickSound(playWinSound) };
       reelState.canShowWin = false;
     }
 
@@ -610,16 +621,13 @@ type Sprites = PIXI.Sprite[]
 
   //load the assets
   PIXI.Assets.addBundle("assets", {
-    gift: "/assets/gift.png",
-    diamond: "/assets/diamond.png",
-    spade: "/assets/spade.png",
-    light1: 'https://pixijs.com/assets/light_rotate_1.png',
     symbol1: "/assets/1.png",
     symbol2: "/assets/2.png",
     symbol3: "/assets/3.png",
     symbol4: "/assets/4.png",
     symbol5: "/assets/5.png",
     symbol6: "/assets/6.png",
+    bgReel: "/assets/bgReels.jpg",
     start: "/assets/spin.png",
     reduceButton: "/assets/reduce.png",
     addButton: "/assets/add.png",
@@ -674,11 +682,29 @@ type Sprites = PIXI.Sprite[]
 
   // add reel and row button
   addReelAndRowButton.on('pointerdown', () => {
+    if (!addReelAndRowButton.interactive) {
+      console.log(1111111);
+      playClickSound(clickErrorSound);
+      return;
+    }
+
     playClickSound(reelClickSound);
     removeReelSetByLabel();
-    BE.SetReelNum(BE.GetReelNum() + 1)
+
+    const addedReelNum = BE.GetReelNum() + 1;
+    BE.SetReelNum(addedReelNum)
     BE.SetRowNum(BE.GetRowNum() + 1)
     loadReels(BE.GetReelNum())
+
+    if (addedReelNum >= 6) {
+      addReelAndRowButton.interactive = false;
+      addReelAndRowButton.alpha = 0.5;
+    } else {
+      
+      
+      addReelAndRowButton.interactive = true;
+      addReelAndRowButton.alpha = 1;
+    }
   });
 
   // reduce reel and row button

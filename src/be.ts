@@ -1,5 +1,3 @@
-import { random } from "gsap";
-
 
 function temp(): number {
     console.log("123");
@@ -125,9 +123,6 @@ export function GetSpinResult(): SpinRes {
         }
         reelStops.push(symbols);
     }
-    // console.log('reel1 ' + REEL_SET[0]);
-
-    // console.log('reelstopFirst ' + reelStopsFirst);
 
     return new SpinRes(reelStopsFirst, reelStops, winResults(reelStops));
 }
