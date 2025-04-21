@@ -619,6 +619,8 @@ type Sprites = PIXI.Sprite[]
     return buttonSprite;
   }
 
+
+
   //load the assets
   PIXI.Assets.addBundle("assets", {
     symbol1: "/assets/1.png",
@@ -679,11 +681,32 @@ type Sprites = PIXI.Sprite[]
     isPlaying = !isPlaying;
   });
 
+  let canAddReel = true;
+  let canReduceReel = true;
+  // reel control button
+  function updateReelControlButtons() {
+    const reelNum = BE.GetReelNum();
+
+    if (reelNum < 6) {
+      canAddReel = true;
+      addReelAndRowButton.alpha = 1;
+    } else {
+      canAddReel = false;
+      addReelAndRowButton.alpha = 0.5;
+    }
+
+    if (reelNum > 2) {
+      canReduceReel = true;
+      reduceReelAndRowButton.alpha = 1;
+    } else {
+      canReduceReel = false;
+      reduceReelAndRowButton.alpha = 0.5;
+    }
+  }
 
   // add reel and row button
   addReelAndRowButton.on('pointerdown', () => {
-    if (!addReelAndRowButton.interactive) {
-      console.log(1111111);
+    if (!canAddReel) {
       playClickSound(clickErrorSound);
       return;
     }
@@ -696,24 +719,24 @@ type Sprites = PIXI.Sprite[]
     BE.SetRowNum(BE.GetRowNum() + 1)
     loadReels(BE.GetReelNum())
 
-    if (addedReelNum >= 6) {
-      addReelAndRowButton.interactive = false;
-      addReelAndRowButton.alpha = 0.5;
-    } else {
-      
-      
-      addReelAndRowButton.interactive = true;
-      addReelAndRowButton.alpha = 1;
-    }
+    updateReelControlButtons();
   });
 
   // reduce reel and row button
   reduceReelAndRowButton.on('pointerdown', () => {
+    if (!canReduceReel) {
+      playClickSound(clickErrorSound);
+      return;
+    }
+
     playClickSound(reelClickSound);
     removeReelSetByLabel()
+
     BE.SetReelNum(BE.GetReelNum() - 1)
     BE.SetRowNum(BE.GetRowNum() - 1)
     loadReels(BE.GetReelNum())
+
+    updateReelControlButtons();
   });
 
   // start button
