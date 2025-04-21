@@ -52,14 +52,14 @@ type Sprites = PIXI.Sprite[]
 
   const SPACE = 150 * SCALE_Ratio;
   const REEL_SIZE = BE.GetReelSet()[0].length;
-  let REEL_SET_WIDTH = () => BE.GetReelNum() * REEL_GAP
-  let REEL_SET_HIGHT = () => BE.GetRowNum() * SPACE
-  let REEL_SET_X = () => CENTER_X - REEL_SET_WIDTH() / 2;
-  let REEL_SET_Y = () => CENTER_Y - REEL_SET_HIGHT() / 2;
+  const REEL_SET_WIDTH = () => BE.GetReelNum() * REEL_GAP
+  const REEL_SET_HIGHT = () => BE.GetRowNum() * SPACE
+  const REEL_SET_X = () => CENTER_X - REEL_SET_WIDTH() / 2;
+  const REEL_SET_Y = () => CENTER_Y - REEL_SET_HIGHT() / 2;
 
   // amount text position and label
-  let AMOUNT_TEXT_X = app.screen.width;
-  let AMOUNT_TEXT_Y = () => REEL_SET_Y() - 100;
+  const AMOUNT_TEXT_X = app.screen.width;
+  const AMOUNT_TEXT_Y = () => REEL_SET_Y() - 100;
   const AMOUNT_TEXT_LABEL = "winAmount";
 
   // bet text position and label
@@ -210,7 +210,7 @@ type Sprites = PIXI.Sprite[]
 
   // set music
   function music(url: string, autoplay: boolean, loop: boolean, volume: number): Sound {
-    const bgm = sound.add('bgm', {
+    const bgm = sound.add('' + BE.GetRandomInt(0, 99999999) , {
       url: url,
       autoPlay: autoplay,
       loop: loop,
@@ -226,7 +226,7 @@ type Sprites = PIXI.Sprite[]
 
   // background music fade in 
   function fadeInAudio(audio: Sound, duration: number, maxVolume: number) {
-    let start = performance.now();
+    const start = performance.now();
     function step(time: number) {
       const progress = Math.min((time - start) / duration, 1);
       audio.volume = maxVolume * progress; // 👈 控制最大音量
@@ -238,7 +238,7 @@ type Sprites = PIXI.Sprite[]
 
   // background music fade out
   function fadeOutAudio(audio: Sound, duration: number, maxVolume: number) {
-    let start = performance.now();
+    const start = performance.now();
 
     // 取当前音量和 maxVolume 中的较小值作为起始音量
     const startVolume = Math.min(audio.volume, maxVolume);
@@ -265,9 +265,9 @@ type Sprites = PIXI.Sprite[]
 
       // loop of every sprites in one reel
       for (let j = 0; j < reelSize; j++) {
-        let spriteIndex = BE.GetReelSet()[i][j];
-        let texture = spriteMap[spriteIndex];
-        let sprite = new PIXI.Sprite(texture);
+        const spriteIndex = BE.GetReelSet()[i][j];
+        const texture = spriteMap[spriteIndex];
+        const sprite = new PIXI.Sprite(texture);
         sprite.label = '' + j;  // set label for each sprite
         sprites.push(sprite);
       }

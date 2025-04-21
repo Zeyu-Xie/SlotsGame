@@ -112,7 +112,7 @@ export function GetBetLevel(): number {
 }
 
 // get spin result
-function getRandomInt(min: number, max: number): number {
+export function GetRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
@@ -124,7 +124,7 @@ export function GetSpinResult(): SpinRes {
 
         const reel = REEL_SET[i];
         const reelLength = reel.length;
-        const stopIndex = getRandomInt(0, reel.length);
+        const stopIndex = GetRandomInt(0, reel.length);
         // random index of every symbol of the first row
         reelStopsFirst.push(stopIndex);
 
@@ -141,11 +141,11 @@ export function GetSpinResult(): SpinRes {
 
 
 function winResults(reelStops: number[][]): Win[] {
-    let wins: Win[] = []
+    const wins: Win[] = []
     // every symbol type 
     for (let symbolId = 0; symbolId < SYMBOLS.length; symbolId++) {
         let symbolNum = 0;
-        let win = new Win(symbolId, [], 0)
+        const win = new Win(symbolId, [], 0)
 
         // every reel
         for (let reelId = 0; reelId < REEL_NUM; reelId++) {

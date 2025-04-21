@@ -7,7 +7,9 @@
     "start": "npm run dev",
     "build": "npm run lint && tsc && vite build",
     "lint": "eslint .",
-    "dev": "vite"
+    "dev": "vite",
+    "deploy": "gh-pages -d dist",
+    "serve": "vite preview"
   },
   "dependencies": {
     "@pixi/filter-color-matrix": "^7.4.3",
