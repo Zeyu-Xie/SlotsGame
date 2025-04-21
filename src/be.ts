@@ -3,9 +3,7 @@
 let ROW_NUM = 4;
 let REEL_NUM = 5;
 
-let BET_LEVEL:number[] = []
-
-const SYMBOLS = [0, 1, 2, 3, 4, 5]
+const SYMBOLS = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 const PAY_TABLE =
     [
@@ -15,14 +13,17 @@ const PAY_TABLE =
         [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
         [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
         [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [0, 0, 0, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [0, 0, 0, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [0, 0, 0, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
     ]
 
-const REEL_1 = [1, 4, 0, 5, 5, 3, 1]
-const REEL_2 = [2, 2, 5, 4, 2, 5, 3]
-const REEL_3 = [1, 5, 0, 1, 4, 3, 1]
-const REEL_4 = [1, 2, 4, 0, 2, 3, 2]
-const REEL_5 = [1, 2, 3, 1, 5, 3, 4]
-const REEL_6 = [5, 2, 3, 0, 2, 5, 1]
+const REEL_1 = [1, 4, 8, 0, 7, 5, 5, 6, 8, 3, 1, 4, 7]
+const REEL_2 = [2, 2, 5, 4, 8, 7, 2, 6, 5, 3, 6, 2, 8]
+const REEL_3 = [1, 5, 6, 0, 2, 0, 1, 4, 2, 3, 8, 1, 7]
+const REEL_4 = [1, 8, 6, 2, 4, 7, 6, 0, 2, 1, 3, 3, 2]
+const REEL_5 = [1, 8, 2, 3, 6, 7, 1, 6, 5, 7, 3, 5, 4]
+const REEL_6 = [6, 5, 8, 6, 2, 3, 3, 6, 0, 2, 5, 1, 8]
 
 const REEL_SET = [REEL_1, REEL_2, REEL_3, REEL_4, REEL_5, REEL_6];
 
@@ -99,15 +100,15 @@ export function SetRowNum(value: number) {
 }
 
 // get bet amount of every symbol
-function calculateBetLevel(reelNum: number): number[] {
-    const base = 10;
-    return Array(reelNum).fill(0).map((_, i) => base * (i + 1));
-}
+// function calculateBetLevel(reelNum: number): number[] {
+//     const base = 10;
+//     return Array(reelNum).fill(0).map((_, i) => base * (i + 1));
+// }
 
 // get bet amount of every symbol
 export function GetBetLevel(): number {
-    BET_LEVEL = calculateBetLevel(REEL_NUM);   
-    return BET_LEVEL[REEL_NUM - 1];
+    const base = 10;
+    return REEL_NUM * base;
 }
 
 // get spin result

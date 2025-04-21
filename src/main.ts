@@ -15,37 +15,42 @@ type Sprites = PIXI.Sprite[]
   await app.init({ resizeTo: window });
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
+  // adjustable to different screen size
+  const screenWidth = app.screen.width;
+  const screenHeight = app.screen.height;
+  const SCALE_Ratio = Math.min(screenWidth / 1280, screenHeight / 720) * 0.7;
+
   // define gloable variables
-  const REEL_GAP = 140;
-  const CENTER_X = app.screen.width / 2;
-  const CENTER_Y = app.screen.height / 2;
-  const SCALE = 0.6;
+  const REEL_GAP = 150 * SCALE_Ratio;
+  const CENTER_X = screenWidth / 2;
+  const CENTER_Y = screenHeight / 2;
+  const SCALE = 0.6 * SCALE_Ratio;
 
   const SCROLL_DIRECTION_DOWN = 1;
   const SCROLL_DIRECTION_UP = -1;
 
-  const MAX_VELOCITY = 50;
-  const MIN_VELOCITY = 13;
+  const MAX_VELOCITY = 50 *SCALE_Ratio;
+  const MIN_VELOCITY = 13 *SCALE_Ratio;
   const VELOCITY_INCREASE_RATE = 0.9;
   const VELOCITY_DECREASE_RATE = 0.5;
 
   const MUSICBUTTON_X = 20;
   const MUSICBUTTON_Y = 20;
-  const MUSICBUTTON_SCALE = 0.3;
+  const MUSICBUTTON_SCALE = 0.3 * SCALE_Ratio;
 
-  const ACTIONBUTTON_X = app.screen.width - 300;
-  const ACTIONBUTTON_Y = app.screen.height - 200;
-  const ACTIONBUTTON_SCALE = 1;
+  const ACTIONBUTTON_X = app.screen.width - 300 * SCALE_Ratio;
+  const ACTIONBUTTON_Y = app.screen.height - 200 * SCALE_Ratio;
+  const ACTIONBUTTON_SCALE = 1 * SCALE_Ratio;
 
-  const ADD_REEL_ROW_BUTTON_X = ACTIONBUTTON_X - 100;
+  const ADD_REEL_ROW_BUTTON_X = ACTIONBUTTON_X - 100 * SCALE_Ratio;
   const ADD_REEL_ROW_BUTTON_Y = ACTIONBUTTON_Y
-  const ADD_REEL_ROW_BUTTON_SCALE = 0.5;
+  const ADD_REEL_ROW_BUTTON_SCALE = 0.5 * SCALE_Ratio;
 
-  const REDUCE_REEL_ROW_BUTTON_X = ACTIONBUTTON_X - 100;
-  const REDUCE_REEL_ROW_BUTTON_Y = ACTIONBUTTON_Y + 100;
-  const REDUCE_REEL_ROW_BUTTON_SCALE = 0.5;
+  const REDUCE_REEL_ROW_BUTTON_X = ACTIONBUTTON_X - 100 * SCALE_Ratio;
+  const REDUCE_REEL_ROW_BUTTON_Y = ACTIONBUTTON_Y + 100 * SCALE_Ratio;
+  const REDUCE_REEL_ROW_BUTTON_SCALE = 0.5 * SCALE_Ratio;
 
-  const SPACE = 130;
+  const SPACE = 150 * SCALE_Ratio;
   const REEL_SIZE = BE.GetReelSet()[0].length;
   let REEL_SET_WIDTH = () => BE.GetReelNum() * REEL_GAP
   let REEL_SET_HIGHT = () => BE.GetRowNum() * SPACE
@@ -53,14 +58,14 @@ type Sprites = PIXI.Sprite[]
   let REEL_SET_Y = () => CENTER_Y - REEL_SET_HIGHT() / 2;
 
   // amount text position and label
-  const AMOUNT_TEXT_X = app.screen.width;
-  const AMOUNT_TEXT_Y = REEL_SET_Y() - 100;
+  let AMOUNT_TEXT_X = app.screen.width;
+  let AMOUNT_TEXT_Y = () => REEL_SET_Y() - 100;
   const AMOUNT_TEXT_LABEL = "winAmount";
 
   // bet text position and label
-  const BET_TEXT_X = ADD_REEL_ROW_BUTTON_X *2 + 200;
-  const BET_TEXT_Y = ACTIONBUTTON_Y - 100;
-  const BET_TEXT_LABEL = "betAmount";
+  const BET_TEXT_X = ADD_REEL_ROW_BUTTON_X * 2 + 400 * SCALE_Ratio;
+  const BET_TEXT_Y = ACTIONBUTTON_Y - 80;
+  const BET_TEXT_LABEL = "betLevel";
 
   // backgouund mp4
   const BG_X = app.screen.width / 2;
@@ -155,6 +160,9 @@ type Sprites = PIXI.Sprite[]
   const bgm = music('/assets/bgMusic.mp3', BGM_AUTOPLAY, BGM_LOOP, BGM_INITIAL_VOLUME);
   fadeInAudio(bgm, BGM_FADE_DURATION, BGM_FADE_MAX_VOLUME);
 
+  // create bet amount text
+  createAmountText(`Bet: ${BE.GetBetLevel()} €`, BET_TEXT_X, BET_TEXT_Y, BET_TEXT_LABEL);
+
   // set sounds
   const bgmClickSound = music(START_CLICK_SOUND, START_CLICK_AUTOPLAY, START_CLICK_LOOP, START_CLICK_VOLUME);
   const reelClickSound = music(REEL_CLICK_SOUND, REEL_CLICK_AUTOPLAY, REEL_CLICK_LOOP, REEL_CLICK_VOLUME);
@@ -244,7 +252,6 @@ type Sprites = PIXI.Sprite[]
         audio.stop(); // 完成后停止播放
       }
     }
-
     requestAnimationFrame(step);
   }
 
@@ -345,11 +352,11 @@ type Sprites = PIXI.Sprite[]
     playArea.addChild(bgReel);
     playArea.addChild(reelSet);
     app.stage.addChild(playArea);
-    bgReel.scale.set(REEL_SET_WIDTH() / 1190);
+    bgReel.scale.set(REEL_SET_WIDTH() / 1175);
     playArea.label = 'reelSet';
     reelStates = createReelStates(reels);
-    bgReel.x = REEL_SET_X() - 30;
-    bgReel.y = REEL_SET_Y() - 30;
+    bgReel.x = REEL_SET_X() - 50;
+    bgReel.y = REEL_SET_Y() - 40;
     wins = [];
     bounce(reelSet, 2);
   }
@@ -563,7 +570,7 @@ type Sprites = PIXI.Sprite[]
       }
     });
     text.label = label;
-    text.x = (whole_x - text.width)/2;
+    text.x = (whole_x - text.width) / 2;
     text.y = y;
     app.stage.addChild(text);
   }
@@ -604,7 +611,7 @@ type Sprites = PIXI.Sprite[]
     if (allReelsCanShowWin()) {
       highlightWinningSymbols(wins);
       const totalWinAmount = getTotalWinAmount(wins);
-      createAmountText(`Total Win Amount: ${totalWinAmount} €`, AMOUNT_TEXT_X, AMOUNT_TEXT_Y, AMOUNT_TEXT_LABEL);      
+      createAmountText(`Total Win Amount: ${totalWinAmount} €`, AMOUNT_TEXT_X, AMOUNT_TEXT_Y(), AMOUNT_TEXT_LABEL);
       if (totalWinAmount > 0) { playClickSound(playWinSound) };
       reelState.canShowWin = false;
     }
@@ -633,8 +640,11 @@ type Sprites = PIXI.Sprite[]
     symbol3: "/assets/3.png",
     symbol4: "/assets/4.png",
     symbol5: "/assets/5.png",
-    symbol6: "/assets/6.png",
-    bgReel: "/assets/bgReels.jpg",
+    symbol6: "/assets/J.png",
+    symbol7: "/assets/K.jpg",
+    symbol8: "/assets/Q.jpg",
+    symbol9: "/assets/A.png",
+    bgReel: "/assets/bgReels1.png",
     start: "/assets/spin.png",
     reduceButton: "/assets/reduce.png",
     addButton: "/assets/add.png",
@@ -656,7 +666,10 @@ type Sprites = PIXI.Sprite[]
     2: PIXI.Assets.get("symbol3"),
     3: PIXI.Assets.get("symbol4"),
     4: PIXI.Assets.get("symbol5"),
-    5: PIXI.Assets.get("symbol6")
+    5: PIXI.Assets.get("symbol6"),
+    6: PIXI.Assets.get("symbol7"),
+    7: PIXI.Assets.get("symbol8"),
+    8: PIXI.Assets.get("symbol9"),
   }
 
   // create and render button
@@ -712,6 +725,7 @@ type Sprites = PIXI.Sprite[]
 
   // add reel and row button
   addReelAndRowButton.on('pointerdown', () => {
+
     if (!canAddReel) {
       playClickSound(clickErrorSound);
       return;
@@ -725,6 +739,9 @@ type Sprites = PIXI.Sprite[]
     loadReels(BE.GetReelNum())
 
     updateReelControlButtons();
+
+    clearTextByLabel("betLevel");
+    createAmountText(`Bet: ${BE.GetBetLevel()} €`, BET_TEXT_X, BET_TEXT_Y, BET_TEXT_LABEL);
   });
 
   // reduce reel and row button
@@ -742,6 +759,9 @@ type Sprites = PIXI.Sprite[]
     loadReels(BE.GetReelNum())
 
     updateReelControlButtons();
+
+    clearTextByLabel("betLevel");
+    createAmountText(`Bet: ${BE.GetBetLevel()} €`, BET_TEXT_X, BET_TEXT_Y, BET_TEXT_LABEL);
   });
 
   // start button
@@ -761,9 +781,6 @@ type Sprites = PIXI.Sprite[]
       triggerStop();
     }, 800);
   });
-
-  // create bet amount text
-  createAmountText(`Bet Level: ${BE.GetBetLevel()}`, BET_TEXT_X, BET_TEXT_Y, BET_TEXT_LABEL);
 
   app.ticker.add((time: PIXI.Ticker) => {
 
