@@ -52,6 +52,16 @@ type Sprites = PIXI.Sprite[]
   let REEL_SET_X = () => CENTER_X - REEL_SET_WIDTH() / 2;
   let REEL_SET_Y = () => CENTER_Y - REEL_SET_HIGHT() / 2;
 
+  // amount text position and label
+  const AMOUNT_TEXT_X = app.screen.width;
+  const AMOUNT_TEXT_Y = REEL_SET_Y() - 100;
+  const AMOUNT_TEXT_LABEL = "winAmount";
+
+  // bet text position and label
+  const BET_TEXT_X = ADD_REEL_ROW_BUTTON_X *2 + 200;
+  const BET_TEXT_Y = ACTIONBUTTON_Y - 100;
+  const BET_TEXT_LABEL = "betAmount";
+
   // backgouund mp4
   const BG_X = app.screen.width / 2;
   const BG_Y = app.screen.height / 2;
@@ -542,7 +552,7 @@ type Sprites = PIXI.Sprite[]
   }
 
   // create amount text
-  function createAmountText(showText: string) {
+  function createAmountText(showText: string, whole_x: number, y: number, label: string) {
     const text = new PIXI.Text({
       text: showText,
       style: {
@@ -552,11 +562,10 @@ type Sprites = PIXI.Sprite[]
         align: 'center',
       }
     });
-    text.label = "winAmount";
-    text.x = (app.screen.width - text.width) / 2;
-    text.y = REEL_SET_Y() - 100;
+    text.label = label;
+    text.x = (whole_x - text.width)/2;
+    text.y = y;
     app.stage.addChild(text);
-
   }
 
   // clear amount text
@@ -595,12 +604,10 @@ type Sprites = PIXI.Sprite[]
     if (allReelsCanShowWin()) {
       highlightWinningSymbols(wins);
       const totalWinAmount = getTotalWinAmount(wins);
-      console.log(`Total Win Amount: ${totalWinAmount}`);
-      createAmountText(`Total Win Amount: ${totalWinAmount} €`)
+      createAmountText(`Total Win Amount: ${totalWinAmount} €`, AMOUNT_TEXT_X, AMOUNT_TEXT_Y, AMOUNT_TEXT_LABEL);      
       if (totalWinAmount > 0) { playClickSound(playWinSound) };
       reelState.canShowWin = false;
     }
-
   }
 
   // create and set the action mode of the button
@@ -619,8 +626,6 @@ type Sprites = PIXI.Sprite[]
     return buttonSprite;
   }
 
-
-
   //load the assets
   PIXI.Assets.addBundle("assets", {
     symbol1: "/assets/1.png",
@@ -638,6 +643,7 @@ type Sprites = PIXI.Sprite[]
   });
   const textures = await PIXI.Assets.loadBundle("assets");
 
+  // load the background music and sound effects
   const musicOn = new PIXI.Sprite(textures.bgMusicOn);
   const actionButtonSprite = new PIXI.Sprite(textures.start);
   const addReelAndRowSprite = new PIXI.Sprite(textures.addButton);
@@ -672,11 +678,11 @@ type Sprites = PIXI.Sprite[]
     if (isPlaying) {
       fadeOutAudio(bgm, BGM_FADE_DURATION, BGM_FADE_MAX_VOLUME);
       playClickSound(bgmClickSound);
-      bgMusicButton.texture = textures.bgMusicOff; //  切换成关闭图标
+      bgMusicButton.texture = textures.bgMusicOff;
     } else {
       fadeInAudio(bgm, BGM_FADE_DURATION, BGM_FADE_MAX_VOLUME);
       playClickSound(bgmClickSound);
-      bgMusicButton.texture = textures.bgMusicOn; //  切换成播放图标
+      bgMusicButton.texture = textures.bgMusicOn;
     }
     isPlaying = !isPlaying;
   });
@@ -714,8 +720,7 @@ type Sprites = PIXI.Sprite[]
     playClickSound(reelClickSound);
     removeReelSetByLabel();
 
-    const addedReelNum = BE.GetReelNum() + 1;
-    BE.SetReelNum(addedReelNum)
+    BE.SetReelNum(BE.GetReelNum() + 1)
     BE.SetRowNum(BE.GetRowNum() + 1)
     loadReels(BE.GetReelNum())
 
@@ -757,13 +762,15 @@ type Sprites = PIXI.Sprite[]
     }, 800);
   });
 
+  // create bet amount text
+  createAmountText(`Bet Level: ${BE.GetBetLevel()}`, BET_TEXT_X, BET_TEXT_Y, BET_TEXT_LABEL);
+
   app.ticker.add((time: PIXI.Ticker) => {
 
     for (let i = 0; i < reelStates.length; i++) {
       const reelState = reelStates[i];
       run(reelState, time.deltaTime);
     }
-
   });
 
 })();

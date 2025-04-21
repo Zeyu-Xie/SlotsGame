@@ -1,14 +1,10 @@
 
-function temp(): number {
-    console.log("123");
-
-    return 1;
-}
-temp()
-
 // play area
 let ROW_NUM = 4;
 let REEL_NUM = 5;
+
+let BET_LEVEL:number[] = []
+
 const SYMBOLS = [0, 1, 2, 3, 4, 5]
 
 const PAY_TABLE =
@@ -20,7 +16,6 @@ const PAY_TABLE =
         [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
         [0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
     ]
-
 
 const REEL_1 = [1, 4, 0, 5, 5, 3, 1]
 const REEL_2 = [2, 2, 5, 4, 2, 5, 3]
@@ -77,7 +72,6 @@ class SpinRes {
     }
 }
 
-
 // get the all symbols and reels of reel set
 export function GetReelSet(): number[][] {
     return REEL_SET;
@@ -87,16 +81,33 @@ export function GetReelSet(): number[][] {
 export function GetRowNum(): number {
     return ROW_NUM;
 }
+
+// get the number of reels of play area
 export function GetReelNum(): number {
     return REEL_NUM;
 }
 
+// set the number of symbols of play area
 export function SetReelNum(value: number) {
     REEL_NUM = value;
+    // BET_LEVEL = calculateBetLevel(REEL_NUM);    
 }
 
+// set the number of rows of play area
 export function SetRowNum(value: number) {
     ROW_NUM = value;
+}
+
+// get bet amount of every symbol
+function calculateBetLevel(reelNum: number): number[] {
+    const base = 10;
+    return Array(reelNum).fill(0).map((_, i) => base * (i + 1));
+}
+
+// get bet amount of every symbol
+export function GetBetLevel(): number {
+    BET_LEVEL = calculateBetLevel(REEL_NUM);   
+    return BET_LEVEL[REEL_NUM - 1];
 }
 
 // get spin result
@@ -154,8 +165,6 @@ function winResults(reelStops: number[][]): Win[] {
     }
     return wins
 }
-
-
 
 // ---- test -----
 const spin = GetSpinResult();
