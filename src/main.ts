@@ -60,7 +60,7 @@ type Sprites = PIXI.Sprite[]
 
   // amount text position and label
   const AMOUNT_TEXT_X = app.screen.width;
-  const AMOUNT_TEXT_Y = () => REEL_SET_Y() - 100;
+  const AMOUNT_TEXT_Y = () => REEL_SET_Y() - 50;
   const AMOUNT_TEXT_LABEL = "winAmount";
 
   // bet text position and label
