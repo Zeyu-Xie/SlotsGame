@@ -342,11 +342,11 @@ type Sprites = PIXI.Sprite[]
     const spritesArray = createReelsSprites(reelNum, REEL_SIZE, SPRITE_MAP);
     const reels = createReels(spritesArray, SCALE, SPACE);
     const reelSet = createReelSet(reels, REEL_SET_X(), REEL_SET_Y() + 10, REEL_GAP);
-    reelSet.filterArea = new PIXI.Rectangle(REEL_SET_X(), REEL_SET_Y(), REEL_SET_WIDTH(), REEL_SET_HIGHT() + 15);
+    reelSet.filterArea = new PIXI.Rectangle(REEL_SET_X(), REEL_SET_Y(), REEL_SET_WIDTH(), REEL_SET_HIGHT() + 10);
     reelSet.filters = [new PIXI.AlphaFilter()];
     const playArea = new PIXI.Container();
     const bgReel = new PIXI.Sprite(textures.bgReel);
-    playArea.addChild(bgReel);
+    // playArea.addChild(bgReel);
     playArea.addChild(reelSet);
     app.stage.addChild(playArea);
     bgReel.scale.set(REEL_SET_WIDTH() / 1175);
