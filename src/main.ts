@@ -180,6 +180,7 @@ type Sprites = PIXI.Sprite[]
     video.muted = true;
     video.playsInline = true;
     video.autoplay = true;
+    video.crossOrigin = 'anonymous';
 
     try {
       await video.play();
