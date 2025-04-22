@@ -188,23 +188,19 @@ type Sprites = PIXI.Sprite[]
       console.warn('Autoplay blocked:', e);
     }
 
-    // 创建纹理和精灵
     const texture = PIXI.Texture.from(video);
     const bg = new PIXI.Sprite(texture);
 
-    // cover 效果：等比放大，允许裁切
     const finalScale = scale ?? Math.max(
       app.screen.width / bg.texture.width,
       app.screen.height / bg.texture.height
     );
     bg.scale.set(finalScale);
 
-    // 居中
     bg.anchor.set(0.5);
     bg.x = x;
     bg.y = y;
 
-    // 添加到舞台底层
     app.stage.addChildAt(bg, layer);
 
     return bg;
@@ -216,7 +212,7 @@ type Sprites = PIXI.Sprite[]
       url: url,
       autoPlay: autoplay,
       loop: loop,
-      volume: volume, // 方便做淡入
+      volume: volume, 
     });
     return bgm;
   }
@@ -242,16 +238,15 @@ type Sprites = PIXI.Sprite[]
   function fadeOutAudio(audio: Sound, duration: number, maxVolume: number) {
     const start = performance.now();
 
-    // 取当前音量和 maxVolume 中的较小值作为起始音量
     const startVolume = Math.min(audio.volume, maxVolume);
 
     function step(time: number) {
       const progress = Math.min((time - start) / duration, 1);
-      audio.volume = startVolume * (1 - progress); // 渐变到 0
+      audio.volume = startVolume * (1 - progress); 
       if (progress < 1) {
         requestAnimationFrame(step);
       } else {
-        audio.stop(); // 完成后停止播放
+        audio.stop(); 
       }
     }
     requestAnimationFrame(step);
@@ -682,7 +677,7 @@ type Sprites = PIXI.Sprite[]
 
   // all states and wins
   let reelStates: ReelState[];
-  let wins: BE.Win[] = []  // win的类的数组(id,坐标和amount)
+  let wins: BE.Win[] = []  
 
   // initial all reels
   loadReels(BE.GetReelNum())
