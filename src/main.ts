@@ -676,7 +676,7 @@ type Sprites = PIXI.Sprite[]
   const actionButton = createAndRenderButton(setButtonActionMode(actionButtonSprite), ACTIONBUTTON_X, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
   const addReelAndRowButton = createAndRenderButton(setButtonActionMode(addReelAndRowSprite), ADD_REEL_ROW_BUTTON_X, ADD_REEL_ROW_BUTTON_Y, ADD_REEL_ROW_BUTTON_SCALE);
   const reduceReelAndRowButton = createAndRenderButton(setButtonActionMode(reduceReelAndRowSprite), REDUCE_REEL_ROW_BUTTON_X, REDUCE_REEL_ROW_BUTTON_Y, REDUCE_REEL_ROW_BUTTON_SCALE);
-  const githubButton = createAndRenderButton(setButtonActionMode(githubSprite), MUSICBUTTON_X + 150 * SCALE_Ratio, MUSICBUTTON_Y, MUSICBUTTON_SCALE);
+  const githubButton = createAndRenderButton(setButtonActionMode(githubSprite), MUSICBUTTON_X + 100 * SCALE_Ratio, MUSICBUTTON_Y, MUSICBUTTON_SCALE);
 
   // all states and wins
   let reelStates: ReelState[];
