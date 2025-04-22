@@ -15,6 +15,7 @@ type Sprites = PIXI.Sprite[]
   await app.init({ resizeTo: window });
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
+  const BASE_URL =  "https://raw.githubusercontent.com/HeleneHuang/SlotsGame/main/public/"
   // adjustable to different screen size
   const screenWidth = app.screen.width;
   const screenHeight = app.screen.height;
@@ -79,38 +80,38 @@ type Sprites = PIXI.Sprite[]
   const BGM_FADE_MAX_VOLUME = 0.3;
 
   // set click start button sound parameters
-  const START_CLICK_SOUND = '/assets/bgmClickDuang.mp3'
+  const START_CLICK_SOUND = BASE_URL + 'assets/bgmClickDuang.mp3'
   const START_CLICK_AUTOPLAY = false;
   const START_CLICK_LOOP = false;
   const START_CLICK_VOLUME = 0.4;
 
   // set click add/reduce button sound parameters
-  const REEL_CLICK_SOUND = '/assets/bling.mp3'
+  const REEL_CLICK_SOUND = BASE_URL + 'assets/bling.mp3'
   const REEL_CLICK_AUTOPLAY = false;
   const REEL_CLICK_LOOP = false;
   const REEL_CLICK_VOLUME = 0.4;
 
   // set reel roll sound parameters
   // const REEL_ROLL_SOUND = '/assets/reelStep1.5.mp3'
-  const REEL_ROLL_SOUND = '/assets/hu.mp3'
+  const REEL_ROLL_SOUND = BASE_URL + 'assets/hu.mp3'
   const REEL_ROLL_AUTOPLAY = false;
   const REEL_ROLL_LOOP = false;
   const REEL_ROLL_VOLUME = 1;
 
   // set reel stop sound parameters
-  const REEL_STOP_SOUND = '/assets/reelStop1.mp3'
+  const REEL_STOP_SOUND = BASE_URL + 'assets/reelStop1.mp3'
   const REEL_STOP_AUTOPLAY = false;
   const REEL_STOP_LOOP = false;
   const REEL_STOP_VOLUME = 1;
 
   // set play win sound parameters
-  const PLAY_WIN_SOUND = '/assets/playWin.mp3'
+  const PLAY_WIN_SOUND = BASE_URL + 'assets/playWin.mp3'
   const PLAY_WIN_AUTOPLAY = false;
   const PLAY_WIN_LOOP = false;
   const PLAY_WIN_VOLUME = 1;
 
   // set click error sound parameters
-  const CLICK_ERROR_SOUND = '/assets/clickError.mp3'
+  const CLICK_ERROR_SOUND = BASE_URL + 'assets/clickError.mp3'
   const CLICK_ERROR_AUTOPLAY = false;
   const CLICK_ERROR_LOOP = false;
   const CLICK_ERROR_VOLUME = 1;
@@ -153,11 +154,11 @@ type Sprites = PIXI.Sprite[]
   }
 
   // set mp4 background
-  await createVideoBackground(app, '/assets/bg4.mp4', BG_X, BG_Y, 0);
+  await createVideoBackground(app, BASE_URL + 'assets/bg4.mp4', BG_X, BG_Y, 0);
   // await createVideoBackground(app, '/assets/bgReel.mp4', BG_X, BG_Y, 1, 0.5);
 
   // set bgm
-  const bgm = music('/assets/bgMusic.mp3', BGM_AUTOPLAY, BGM_LOOP, BGM_INITIAL_VOLUME);
+  const bgm = music(BASE_URL + 'assets/bgMusic.mp3', BGM_AUTOPLAY, BGM_LOOP, BGM_INITIAL_VOLUME);
   fadeInAudio(bgm, BGM_FADE_DURATION, BGM_FADE_MAX_VOLUME);
 
   // create bet amount text
@@ -635,21 +636,21 @@ type Sprites = PIXI.Sprite[]
 
   //load the assets
   PIXI.Assets.addBundle("assets", {
-    symbol1: "/assets/1.png",
-    symbol2: "/assets/2.png",
-    symbol3: "/assets/3.png",
-    symbol4: "/assets/4.png",
-    symbol5: "/assets/5.png",
-    symbol6: "/assets/J.png",
-    symbol7: "/assets/K.jpg",
-    symbol8: "/assets/Q.jpg",
-    symbol9: "/assets/A.png",
-    bgReel: "/assets/bgReels1.png",
-    start: "/assets/spin.png",
-    reduceButton: "/assets/reduce.png",
-    addButton: "/assets/add.png",
-    bgMusicOn: "/assets/musicOn.png",
-    bgMusicOff: "/assets/musicOff.png",
+    symbol1: BASE_URL + "assets/1.png",
+    symbol2: BASE_URL + "assets/2.png",
+    symbol3: BASE_URL + "assets/3.png",
+    symbol4: BASE_URL + "assets/4.png",
+    symbol5: BASE_URL + "assets/5.png",
+    symbol6: BASE_URL + "assets/J.png",
+    symbol7: BASE_URL + "assets/K.jpg",
+    symbol8: BASE_URL + "assets/Q.jpg",
+    symbol9: BASE_URL + "assets/A.png",
+    bgReel: BASE_URL + "assets/bgReels1.png",
+    start: BASE_URL + "assets/spin.png",
+    reduceButton: BASE_URL + "assets/reduce.png",
+    addButton: BASE_URL + "assets/add.png",
+    bgMusicOn: BASE_URL + "assets/musicOn.png",
+    bgMusicOff: BASE_URL + "assets/musicOff.png",
   });
   const textures = await PIXI.Assets.loadBundle("assets");
 
