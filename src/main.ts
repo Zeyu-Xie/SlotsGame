@@ -647,6 +647,7 @@ type Sprites = PIXI.Sprite[]
     addButton: BASE_URL + "assets/add.png",
     bgMusicOn: BASE_URL + "assets/musicOn.png",
     bgMusicOff: BASE_URL + "assets/musicOff.png",
+    github: BASE_URL + "assets/git.jpg",
   });
   const textures = await PIXI.Assets.loadBundle("assets");
 
@@ -655,6 +656,7 @@ type Sprites = PIXI.Sprite[]
   const actionButtonSprite = new PIXI.Sprite(textures.start);
   const addReelAndRowSprite = new PIXI.Sprite(textures.addButton);
   const reduceReelAndRowSprite = new PIXI.Sprite(textures.reduceButton);
+  const githubSprite = new PIXI.Sprite(textures.github);
 
   // create sprite map
   const SPRITE_MAP: { [key: number]: PIXI.Texture } = {
@@ -674,6 +676,7 @@ type Sprites = PIXI.Sprite[]
   const actionButton = createAndRenderButton(setButtonActionMode(actionButtonSprite), ACTIONBUTTON_X, ACTIONBUTTON_Y, ACTIONBUTTON_SCALE);
   const addReelAndRowButton = createAndRenderButton(setButtonActionMode(addReelAndRowSprite), ADD_REEL_ROW_BUTTON_X, ADD_REEL_ROW_BUTTON_Y, ADD_REEL_ROW_BUTTON_SCALE);
   const reduceReelAndRowButton = createAndRenderButton(setButtonActionMode(reduceReelAndRowSprite), REDUCE_REEL_ROW_BUTTON_X, REDUCE_REEL_ROW_BUTTON_Y, REDUCE_REEL_ROW_BUTTON_SCALE);
+  const githubButton = createAndRenderButton(setButtonActionMode(githubSprite), MUSICBUTTON_X + 150 * SCALE_Ratio, MUSICBUTTON_Y, MUSICBUTTON_SCALE);
 
   // all states and wins
   let reelStates: ReelState[];
@@ -778,6 +781,10 @@ type Sprites = PIXI.Sprite[]
       triggerStop();
     }, 800);
   });
+
+  // github button
+  githubButton.on('pointerdown', () => {
+    window.open("https://github.com/HeleneHuang/SlotsGame")});
 
   app.ticker.add((time: PIXI.Ticker) => {
 
