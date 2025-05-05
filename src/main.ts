@@ -779,8 +779,8 @@ type Sprites = PIXI.Sprite[];
     symbol4: BASE_URL + "assets/4.png",
     symbol5: BASE_URL + "assets/5.png",
     symbol6: BASE_URL + "assets/J.png",
-    symbol7: BASE_URL + "assets/K.jpg",
-    symbol8: BASE_URL + "assets/Q.jpg",
+    symbol7: BASE_URL + "assets/K.png",
+    symbol8: BASE_URL + "assets/Q.png",
     symbol9: BASE_URL + "assets/A.png",
     bgReel: BASE_URL + "assets/bgReels1.png",
     start: BASE_URL + "assets/spin.png",
@@ -788,7 +788,7 @@ type Sprites = PIXI.Sprite[];
     addButton: BASE_URL + "assets/add.png",
     bgMusicOn: BASE_URL + "assets/musicOn.png",
     bgMusicOff: BASE_URL + "assets/musicOff.png",
-    github: BASE_URL + "assets/git.jpg",
+    github: BASE_URL + "assets/git.png",
   });
   const textures = await PIXI.Assets.loadBundle("assets");
 
